@@ -1,0 +1,18 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import {hashPassword,verifyPassword,encryptToken,decryptToken,constantEqual,csrfToken,randomToken,sha256,parseCookies,validateEmail} from '../server/security.js';
+test('password is hashed and correct password verifies',async()=>{const p='Correct horse / test only 54321';const hash=await hashPassword(p);assert.ok(!hash.includes(p));assert.equal(await verifyPassword(p,hash),true);assert.equal(await verifyPassword('wrong password',hash),false);});
+test('password salts differ',async()=>{const p='long enough test password';assert.notEqual(await hashPassword(p),await hashPassword(p));});
+test('short password rejected',async()=>assert.rejects(()=>hashPassword('1234')));
+test('oversized password rejected',async()=>assert.rejects(()=>hashPassword('a'.repeat(257))));
+test('malformed password hash rejected',async()=>assert.equal(await verifyPassword('a'.repeat(14),'junk'),false));
+test('authenticated token encryption round trip',()=>{const key='a1'.repeat(32),cipher=encryptToken('not-a-real-token',key);assert.equal(decryptToken(cipher,key),'not-a-real-token');assert.ok(!cipher.includes('not-a-real-token'));});
+test('token encryption is randomized',()=>{const key='a1'.repeat(32);assert.notEqual(encryptToken('same',key),encryptToken('same',key));});
+test('wrong encryption key fails',()=>{const cipher=encryptToken('test','a1'.repeat(32));assert.throws(()=>decryptToken(cipher,'b2'.repeat(32)));});
+test('tampering is detected',()=>{const cipher=encryptToken('test','a1'.repeat(32));const parts=cipher.split(':');parts[2]='00'.repeat(16);assert.throws(()=>decryptToken(parts.join(':'),'a1'.repeat(32)));});
+test('invalid encryption key rejected',()=>assert.throws(()=>encryptToken('test','bad')));
+test('constant-time comparison returns expected values',()=>{assert.equal(constantEqual('a','a'),true);assert.equal(constantEqual('a','b'),false);});
+test('CSRF token bound to session and secret',()=>{assert.notEqual(csrfToken('s1','key'),csrfToken('s2','key'));assert.notEqual(csrfToken('s1','key'),csrfToken('s1','other'));});
+test('tokens are unique and digests fixed length',()=>{assert.notEqual(randomToken(),randomToken());assert.equal(sha256(randomToken()).length,64);});
+test('malformed cookie handled without throwing',()=>{assert.equal(parseCookies('x=%ZZ').x,'');assert.equal(parseCookies('x=a=b').x,'a=b');});
+test('email normalization and validation',()=>{assert.equal(validateEmail(' ADMIN@EXAMPLE.COM '),'admin@example.com');assert.throws(()=>validateEmail('not-an-email'));});
