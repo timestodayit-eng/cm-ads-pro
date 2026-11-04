@@ -63,22 +63,25 @@ export function metaRoutes(){
  r.get('/connections',requireAuth,async(req,res)=>res.json({connections:await query('SELECT id,meta_user_id,expires_at,connected_at FROM meta_connections ORDER BY connected_at DESC')}));
  r.post('/discover',requireRole('super_admin'),csrfGuard,async(req,res)=>{
   metaConfigured();const id=String(req.body.connectionId||'');const token=await connectionToken(id);
-  let after,found=0;const started=Date.now();
-  do{
-   const result=await graph('me/adaccounts',token,{fields:'id,name,currency,timezone_name,account_status',limit:100,...(after?{after}:{})});
-   for(const a of result.data||[]){if(!/^act_[0-9]+$/.test(String(a.id)))continue;
-    await query(`INSERT INTO ad_accounts (account_id,connection_id,name,currency,timezone_name,account_status) VALUES (?,?,?,?,?,?)
-      ON DUPLICATE KEY UPDATE connection_id=VALUES(connection_id),name=VALUES(name),currency=VALUES(currency),timezone_name=VALUES(timezone_name),account_status=VALUES(account_status)`,[a.id,id,String(a.name||a.id).slice(0,255),a.currency||'UNKNOWN',a.timezone_name||'UTC',a.account_status??null]);found++;
-   }
-   after=result.paging?.next?result.paging?.cursors?.after:null;
-   if(after&&(found>=500||Date.now()-started>45000))throw httpError(422,'Discovery reached its safety limit; narrow access or add cursor continuation.','META_DISCOVERY_LIMIT');
-  }while(after);
-  await audit(req.user.id,'accounts_discovered');res.json({found});
+  // One Meta page per request: no fixed total account cap or 45-second timeout.
+  // The client may resume with nextCursor, avoiding Hostinger request limits.
+  const after=req.body.after===undefined?undefined:String(req.body.after);
+  if(after!==undefined&&(!/^[A-Za-z0-9_=-]{1,500}$/.test(after)))throw httpError(400,'Invalid discovery cursor.');
+  const result=await graph('me/adaccounts',token,{fields:'id,name,currency,timezone_name,account_status',limit:100,...(after?{after}:{})});
+  let found=0;
+  for(const a of result.data||[]){
+   if(!/^act_[0-9]+$/.test(String(a.id)))continue;
+   await query(`INSERT INTO ad_accounts (account_id,connection_id,name,currency,timezone_name,account_status) VALUES (?,?,?,?,?,?)
+      ON DUPLICATE KEY UPDATE connection_id=VALUES(connection_id),name=VALUES(name),currency=VALUES(currency),timezone_name=VALUES(timezone_name),account_status=VALUES(account_status)`,
+     [a.id,id,String(a.name||a.id).slice(0,255),a.currency||'UNKNOWN',a.timezone_name||'UTC',a.account_status??null]);found++;
+  }
+  const nextCursor=result.paging?.next?result.paging?.cursors?.after||null:null;
+  await audit(req.user.id,'accounts_discovered');res.json({found,nextCursor,hasMore:!!nextCursor});
  });
  r.get('/accounts',requireAuth,async(req,res)=>res.json({accounts:await query('SELECT account_id,name,currency,timezone_name,slot,account_status,last_sync,last_error FROM ad_accounts ORDER BY slot IS NULL,slot,name')}));
  r.post('/mapping',requireRole('super_admin'),csrfGuard,async(req,res)=>{
-  const rows=req.body.accounts;if(!Array.isArray(rows)||rows.length>12)throw httpError(400,'Choose no more than 12 accounts.');
-  const ids=new Set(),slots=new Set();for(const x of rows){if(typeof x.account_id!=='string'||!Number.isInteger(x.slot)||x.slot<1||x.slot>12||ids.has(x.account_id)||slots.has(x.slot))throw httpError(400,'Account slots must be unique, between 1 and 12.');ids.add(x.account_id);slots.add(x.slot);}
+  const rows=req.body.accounts;if(!Array.isArray(rows))throw httpError(400,'Expected a list of selected accounts.');
+  const ids=new Set(),slots=new Set();for(const x of rows){if(typeof x.account_id!=='string'||!Number.isInteger(x.slot)||x.slot<1||x.slot>2147483647||ids.has(x.account_id)||slots.has(x.slot))throw httpError(400,'Account slots must be unique positive integer labels.');ids.add(x.account_id);slots.add(x.slot);}
   await transaction(async c=>{await c.execute('SELECT id FROM app_locks WHERE id=1 FOR UPDATE');await c.execute('UPDATE ad_accounts SET slot=NULL');for(const x of rows){const[result]=await c.execute('UPDATE ad_accounts SET slot=? WHERE account_id=?',[x.slot,x.account_id]);if(result.affectedRows!==1)throw httpError(400,'Unknown account.');}});
   await audit(req.user.id,'account_mapping_saved');res.json({ok:true});
  });

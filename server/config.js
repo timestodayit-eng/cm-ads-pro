@@ -8,7 +8,7 @@ export const config = {
  meta:{ appId:env.META_APP_ID || '',appSecret:env.META_APP_SECRET || '',configId:env.META_CONFIG_ID || '', version:env.META_API_VERSION || '',redirect:env.META_REDIRECT_URI || '' },
  storage:{accountId:trim(env.R2_ACCOUNT_ID),accessKey:trim(env.R2_ACCESS_KEY_ID),secretKey:trim(env.R2_SECRET_ACCESS_KEY),bucket:trim(env.R2_BUCKET),maxVideoBytes:Math.min(1073741824,Math.max(1048576,Number(env.MEDIA_MAX_VIDEO_BYTES)||1073741824)),quotaBytes:Math.max(1073741824,Number(env.MEDIA_STORAGE_QUOTA_BYTES)||53687091200)},
  ai:{key:env.OPENAI_API_KEY || '',model:env.OPENAI_MODEL || 'gpt-5-mini',dailyMax:Math.min(100,Math.max(1,Number(env.AI_DAILY_MAX_REPORTS)||4)),maxTokens:Math.min(8000,Math.max(1000,Number(env.AI_MAX_OUTPUT_TOKENS)||4000)),language:env.AI_REPORT_LANGUAGE==='en'?'en':'bn'},
- monitor:env.MONITOR_ENABLED==='true',reportIntervalHours:Math.max(6,Number(env.AI_REPORT_INTERVAL_HOURS)||24),jobSecret:env.JOB_RUNNER_SECRET || '',
+ publishEnabled:env.PUBLISH_ENABLED==='true',activationEnabled:env.ACTIVATION_ENABLED==='true',monitor:env.MONITOR_ENABLED==='true',reportIntervalHours:Math.max(6,Number(env.AI_REPORT_INTERVAL_HOURS)||24),jobSecret:env.JOB_RUNNER_SECRET || '',
 };
 export function strongSecret(s){return typeof s==='string' && s.length>=32 && !/REPLACE|YOUR_|CHANGE_ME/i.test(s);}
 export function configuration() {

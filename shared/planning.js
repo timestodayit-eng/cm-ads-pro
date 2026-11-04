@@ -12,7 +12,7 @@ export function planBudgets(draft){
  if(!['USD','BDT'].includes(draft.currency))fail('This budget builder supports USD or BDT only.');
  const n=draft.contents?.length,targets=draft.targets;
  if(!Number.isInteger(n)||n<1||n>20)fail('Add 1-20 creative items.');
- if(!Array.isArray(targets)||targets.length<1||targets.length>12)fail('Choose 1-12 accounts.');
+ if(!Array.isArray(targets)||targets.length<1||new Set(targets.map(t=>t.accountId)).size!==targets.length)fail('Choose one or more unique accounts.');
  const base=budgetMinor(draft.baseBudget),increment=budgetMinor(draft.increment);
  if(base<=0||base>10000000||increment<0||increment>10000000)fail('Starting budget must be positive; increment must be zero or positive (maximum 100,000).');
  const scope=draft.budgetScope||'PER_ADSET';if(!['PER_ADSET','ACCOUNT_TOTAL'].includes(scope))fail('Choose a valid budget scope.');
@@ -44,6 +44,7 @@ export function buildPlan(draft){
   if(c.type==='WEBSITE'&&['LEADS','PURCHASES'].includes(c.goal)&&!/^\d{5,30}$/.test(pixelId))fail('Website lead/purchase optimization requires your actual Meta Pixel/Dataset ID.');
   conversion={type:c.type,goal:c.goal,phone:c.type==='CALL'&&c.phone?phoneDestination(c.phone):'',websiteUrl:c.type==='WEBSITE'&&c.websiteUrl?httpsDestination(c.websiteUrl):'',pixelId:c.type==='WEBSITE'?pixelId:'',event:c.goal==='LEADS'?'Lead':c.goal==='PURCHASES'?'Purchase':null};
  }
+ if(allocations.reduce((s,x)=>s+x.totalDailyMinor,0)>Number.MAX_SAFE_INTEGER)fail('Combined daily budget is too large to calculate safely. Split your approval into smaller batches.');
  const creatives=draft.contents.map((c,i)=>{
   if(!String(c.caption||'').trim()||String(c.caption).length>5000)fail(`Creative ${i+1}: add a caption (maximum 5000 characters).`);
   if(!String(c.headline||'').trim()||String(c.headline).length>255)fail(`Creative ${i+1}: add a headline (maximum 255 characters).`);

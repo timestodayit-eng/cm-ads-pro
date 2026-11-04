@@ -33,7 +33,7 @@ async function start() {
     console.log(JSON.stringify({
       event: 'server_ready',
       port: address && typeof address === 'object' ? address.port : port,
-      release: '0.3.0',
+      release: '0.5.0',
       startupFix: 'hostinger-require-1'
     }));
   });

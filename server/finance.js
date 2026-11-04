@@ -62,7 +62,12 @@ export async function financialOverview(ids){
  return{accounts,converted,totals:aggregateFinance(accounts),generatedAt:iso(),period:'account_local_calendar_day',note:'Today is midnight to the last sync in EACH account timezone, not a rolling 24 hours. Reporting can be delayed. Billing amount due is not available prepaid funds; spend-cap headroom is not cash. Missing values remain unavailable, never zero-filled.'};
 }
 export function financeRoutes(){const r=Router();r.use(requireAuth);
- r.get('/',async(req,res)=>{let ids;if(req.query.accounts!==undefined){ids=String(req.query.accounts).split(',').filter(Boolean);if(ids.length>12||new Set(ids).size!==ids.length||ids.some(id=>!/^act_[0-9]+$/.test(id)))throw httpError(400,'Select up to 12 unique account IDs.');}res.json(await financialOverview(ids));});
+ r.get('/',async(req,res)=>{let ids;if(req.query.accounts!==undefined){ids=String(req.query.accounts).split(',').filter(Boolean);if(new Set(ids).size!==ids.length||ids.some(id=>!/^act_[0-9]+$/.test(id)))throw httpError(400,'Select unique account IDs.');}res.json(await financialOverview(ids));});
+ r.post('/query',csrfGuard,async(req,res)=>{
+  const ids=req.body?.accountIds;
+  if(!Array.isArray(ids)||new Set(ids).size!==ids.length||ids.some(x=>typeof x!=='string'||!/^act_\d+$/.test(x)))throw httpError(400,'Select unique valid mapped account IDs.');
+  res.json(await financialOverview(ids));
+ });
  r.post('/:id/refresh',requireRole('super_admin','manager'),csrfGuard,async(req,res)=>{await limit('finance:'+req.params.id,8,5);res.json(await syncFinance(req.params.id));});
  return r;
 }

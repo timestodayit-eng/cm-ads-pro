@@ -12,7 +12,7 @@ before(async()=>{
  if(!enabled)return;
  Object.assign(process.env,{NODE_ENV:'test',APP_ORIGIN:'http://localhost',SESSION_SECRET:'test-session-secret-not-for-production-1234567890',FIRST_ADMIN_SETUP_SECRET:'test-setup-secret-not-for-production-1234567890',TOKEN_ENCRYPTION_KEY:'a1'.repeat(32),META_APP_ID:'100',META_APP_SECRET:'mock-secret-not-real',META_CONFIG_ID:'200',META_API_VERSION:'v99.0',META_REDIRECT_URI:'http://localhost/api/meta/callback'});
  ({query,closeDB}=await import('../../server/db.js'));
- for(const file of ['001-initial.sql','002-media-finance.sql','003-monitoring.sql'])for(const statement of readFileSync(new URL('../../sql/'+file,import.meta.url),'utf8').replace(/^\s*--.*$/gm,'').split(';').map(s=>s.trim()).filter(Boolean))await query(statement);
+ for(const file of ['001-initial.sql','002-media-finance.sql','003-monitoring.sql','004-publishing.sql','005-custom-reports.sql','006-workspace-branding.sql'])for(const statement of readFileSync(new URL('../../sql/'+file,import.meta.url),'utf8').replace(/^\s*--.*$/gm,'').split(';').map(s=>s.trim()).filter(Boolean))await query(statement);
  const{createApp}=await import('../../server/app.js');server=createApp().listen(0,'127.0.0.1');await new Promise(resolve=>server.once('listening',resolve));base='http://127.0.0.1:'+server.address().port;
 });
 after(async()=>{globalThis.fetch=rawFetch;if(server)await new Promise(r=>server.close(r));if(closeDB)await closeDB();});
@@ -22,6 +22,15 @@ it('private dashboard requires login',async()=>assert.equal((await call('/api/ov
 it('first admin created with setup key',async()=>{
  const r=await call('/api/auth/setup',{method:'POST',auth:false,body:{name:'CI Test Admin',email:'test@example.invalid',password:'long-test-password-123456',setupSecret:process.env.FIRST_ADMIN_SETUP_SECRET}});
  assert.equal(r.status,201);cookie=r.headers.get('set-cookie').split(';')[0];csrf=r.data.csrf;assert.equal(r.data.user.role,'super_admin');
+});
+it('public panel branding and administrator updates are validated and persisted',async()=>{
+ const before=await call('/api/branding',{auth:false});assert.equal(before.status,200);assert.equal(before.data.panelName,'Coastal Ads Command Center');
+ const denied=await call('/api/branding',{method:'PUT',auth:false,body:{panelName:'Unauthorized name'}});assert.equal(denied.status,401);
+ const csrfDenied=await call('/api/branding',{method:'PUT',sendCsrf:false,body:{panelName:'Bad name'}});assert.equal(csrfDenied.status,403);
+ const changed=await call('/api/branding',{method:'PUT',body:{panelName:'নতুন বিজ্ঞাপন ড্যাশবোর্ড'}});assert.equal(changed.status,200);assert.equal(changed.data.panelName,'নতুন বিজ্ঞাপন ড্যাশবোর্ড');
+ assert.equal((await call('/api/branding',{auth:false})).data.panelName,'নতুন বিজ্ঞাপন ড্যাশবোর্ড');
+ assert.equal((await call('/api/settings')).data.branding.panelName,'নতুন বিজ্ঞাপন ড্যাশবোর্ড');
+ assert.equal((await call('/api/branding',{method:'PUT',body:{panelName:'<invalid>'}})).status,400);
 });
 it('setup closes after first admin',async()=>{const r=await call('/api/auth/setup',{method:'POST',body:{name:'Second',email:'second@example.invalid',password:'long-test-password-123456',setupSecret:process.env.FIRST_ADMIN_SETUP_SECRET}});assert.equal(r.status,409);});
 it('session returns only safe user fields',async()=>{const r=await call('/api/auth/me');assert.equal(r.status,200);assert.equal(r.data.user.password_hash,undefined);});
@@ -65,6 +74,16 @@ it('manual all-account sync is deduplicated against the active queue',async()=>{
  await call('/api/sync/all',{method:'POST'});
  const [row]=await query("SELECT COUNT(*) AS n FROM jobs WHERE kind='sync_account' AND status IN ('queued','running')");assert.equal(Number(row.n),1);
  const status=await call('/api/sync/status');assert.equal(status.status,200);assert.equal(status.data.accounts[0].status,'queued');assert.equal(status.data.scheduler.healthy,false);
+});
+it('custom report fields, templates and large-selection query paths respond safely',async()=>{
+ const fields=await call('/api/custom-reports/fields');assert.equal(fields.status,200);assert.ok(fields.data.metrics.linkClicks);
+ const config={name:'Morning view',accountIds:['act_123'],from:'2026-10-01',to:'2026-10-02',groupBy:'account',metrics:['spend','impressions']};
+ const stored=await call('/api/custom-reports/templates',{method:'POST',body:config});assert.equal(stored.status,201);
+ const listing=await call('/api/custom-reports/templates');assert.equal(listing.status,200);assert.ok(listing.data.templates.some(t=>t.id===stored.data.id));
+ const r=await call('/api/custom-reports/run',{method:'POST',body:config});assert.equal(r.status,200);assert.equal(r.data.selectedAccounts,1);
+ const perf=await call('/api/performance/query',{method:'POST',body:{period:'today',accountIds:['act_123']}});assert.equal(perf.status,200);
+ const finance=await call('/api/finance/query',{method:'POST',body:{accountIds:['act_123']}});assert.equal(finance.status,200);
+ const deleted=await call('/api/custom-reports/templates/'+stored.data.id,{method:'DELETE'});assert.equal(deleted.status,200);
 });
 it('hourly dashboard never invents unsynced spend',async()=>{
  const r=await call('/api/performance?period=12h');assert.equal(r.status,200);assert.equal(r.data.accounts[0].metrics.spend,null);assert.equal(r.data.accounts[0].metrics.calls,null);

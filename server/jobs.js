@@ -48,15 +48,19 @@ export async function scheduleDue(){
 async function recoverLeases(){
  await query("UPDATE jobs SET status='failed',error_code='UNKNOWN_AI_OUTCOME',finished_at=UTC_TIMESTAMP() WHERE status='running' AND kind='ai_report' AND lease_until<UTC_TIMESTAMP()");
  await query("UPDATE ai_reports SET status='failed',error_code='INTERRUPTED' WHERE status='running' AND created_at<DATE_SUB(UTC_TIMESTAMP(),INTERVAL 10 MINUTE)");
+ await query("UPDATE publish_account_runs r JOIN jobs j ON JSON_UNQUOTE(JSON_EXTRACT(j.payload_json,'$.runId'))=r.id SET r.status='needs_review',r.error_code='UNKNOWN_REMOTE_OUTCOME' WHERE j.status='running' AND j.kind='publish_step' AND j.lease_until<UTC_TIMESTAMP()");
+ await query("UPDATE jobs SET status='failed',error_code='UNKNOWN_REMOTE_OUTCOME',finished_at=UTC_TIMESTAMP() WHERE status='running' AND kind IN ('publish_step','activate_step','pause_step') AND lease_until<UTC_TIMESTAMP()");
  await query("UPDATE jobs SET status=IF(attempts<3,'queued','failed'),error_code='LEASE_EXPIRED',lease_until=NULL WHERE status='running' AND kind='sync_account' AND lease_until<UTC_TIMESTAMP()");
 }
 export async function runOne({schedule=true}={}){
  if(!await monitoringSchemaReady())throw httpError(503,'Import sql/002-media-finance.sql and sql/003-monitoring.sql before syncing.','MONITOR_SCHEMA_REQUIRED');
- if(schedule){await recoverLeases();await scheduleDue();}
+ if(schedule){await recoverLeases();await scheduleDue();const p=await import('./publish.js');await p.recoverPublishQueues();}
  const preferences=await monitorSettings();
  if(!config.monitor||!preferences.enabled)await query("UPDATE jobs SET status='failed',error_code='AUTO_SYNC_PAUSED',finished_at=UTC_TIMESTAMP() WHERE status='queued' AND kind='sync_account' AND dedupe_key LIKE 'auto:%'");
  const job=await transaction(async c=>{
-  const [[item]]=await c.execute("SELECT * FROM jobs WHERE status='queued' AND run_after<=UTC_TIMESTAMP() ORDER BY (kind='sync_account') DESC,created_at,id LIMIT 1 FOR UPDATE");
+  const [[item]]=await c.execute(`SELECT * FROM jobs WHERE status='queued' AND run_after<=UTC_TIMESTAMP()
+    AND (kind<>'publish_step' OR ?) AND (kind<>'activate_step' OR ?)
+    ORDER BY CASE kind WHEN 'pause_step' THEN 5 WHEN 'activate_step' THEN 4 WHEN 'publish_step' THEN 3 WHEN 'sync_account' THEN 2 ELSE 1 END DESC,created_at,id LIMIT 1 FOR UPDATE`,[config.publishEnabled?1:0,config.activationEnabled?1:0]);
   if(!item)return null;
   await c.execute("UPDATE jobs SET status='running',attempts=attempts+1,lease_until=DATE_ADD(UTC_TIMESTAMP(),INTERVAL 180 SECOND) WHERE id=?",[item.id]);return item;
  });
@@ -64,12 +68,23 @@ export async function runOne({schedule=true}={}){
  const payload=parseJSON(job.payload_json,{});const attempt=Number(job.attempts)+1;
  try{
   if(job.kind==='sync_account')await query('INSERT INTO account_sync_state (account_id,last_attempt_at) VALUES (?,UTC_TIMESTAMP()) ON DUPLICATE KEY UPDATE last_attempt_at=UTC_TIMESTAMP()',[payload.accountId]);
-  const result=job.kind==='sync_account'?await syncAccount(payload.accountId):await generateReport(payload.userId||null,Number(payload.days)||7);
+  let result;
+  if(['publish_step','activate_step','pause_step'].includes(job.kind)){
+   const pub=await import('./publish.js');
+   result=job.kind==='publish_step'?await pub.processPublishStep(payload.runId):job.kind==='activate_step'?await pub.processActivationStep(payload.runId):await pub.processPauseStep(payload.runId);
+  }else result=job.kind==='sync_account'?await syncAccount(payload.accountId):await generateReport(payload.userId||null,Number(payload.days)||7);
   await query("UPDATE jobs SET status='completed',finished_at=UTC_TIMESTAMP(),lease_until=NULL,error_code=NULL WHERE id=? AND status='running'",[job.id]);
   if(job.kind==='sync_account')await query('UPDATE account_sync_state SET last_success_at=UTC_TIMESTAMP(),next_allowed_at=NULL,last_error=NULL,details_json=? WHERE account_id=?',[JSON.stringify(result),payload.accountId]);
-  return{processed:true,jobId:job.id,kind:job.kind,accountId:payload.accountId||null,status:'completed',partial:!!result.partial,reportId:result.id||null};
+  if(['publish_step','activate_step'].includes(job.kind)&&result.done===false){
+   const next=await enqueue(job.kind,{runId:payload.runId},`${job.kind}:${payload.runId}:${randomUUID()}`);
+   if(result.delaySeconds)await query('UPDATE jobs SET run_after=? WHERE id=?',[sqlTime(Date.now()+result.delaySeconds*1000),next.id]);
+  }
+  return{processed:true,jobId:job.id,kind:job.kind,accountId:payload.accountId||null,status:result.status||'completed',partial:!!result.partial,reportId:result.id||null};
  }catch(e){
   const code=String(e.code||'JOB_FAILED').slice(0,100),delay=retryDelaySeconds(attempt,code,e.retryAfterSeconds);
+  if(['publish_step','activate_step','pause_step'].includes(job.kind)){
+   await query("UPDATE publish_account_runs SET status='needs_review',error_code=?,error_message=? WHERE id=?",[code,String(e.message||'Publishing operation needs review').slice(0,350),payload.runId]);
+  }
   const retry=job.kind==='sync_account'&&attempt<3&&!/EXPIRED|META_190|META_10$|META_200$/.test(code);
   const after=sqlTime(Date.now()+delay*1000);
   await query("UPDATE jobs SET status=?,error_code=?,run_after=?,lease_until=NULL,finished_at=IF(?='failed',UTC_TIMESTAMP(),NULL) WHERE id=? AND status='running'",[retry?'queued':'failed',code,after,retry?'queued':'failed',job.id]);
@@ -88,7 +103,7 @@ export async function runBatch({source='manual',budgetMs=15000,maxJobs=12,concur
  const locked=await query('UPDATE scheduler_status SET runner_token=?,runner_until=? WHERE id=1 AND (runner_until IS NULL OR runner_until<UTC_TIMESTAMP())',[runner,lease]);
  if(locked.affectedRows!==1)return{processed:0,pending:null,busy:true,message:'Another runner is processing the queue.'};
  try{
-  await recoverLeases();const scheduling=await scheduleDue();const results=[],deadline=Date.now()+Math.min(240000,budgetMs);let claimed=0;
+  await recoverLeases();const scheduling=await scheduleDue();const publisher=await import('./publish.js');await publisher.recoverPublishQueues();const results=[],deadline=Date.now()+Math.min(240000,budgetMs);let claimed=0;
   async function lane(){while(Date.now()<deadline&&claimed<maxJobs){claimed++;const r=await runOne({schedule:false});if(!r.processed)break;results.push(r);}}
   await Promise.all(Array.from({length:Math.min(3,Math.max(1,concurrency))},lane));
   const [pending]=await query("SELECT COUNT(*) AS n FROM jobs WHERE status IN ('queued','running')");

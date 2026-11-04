@@ -14,6 +14,10 @@ import {monitorSettings,monitoringRoutes,monitoringSchemaReady} from './settings
 import {getReport} from './ai.js';
 import {enqueue,runOne,enqueueAll,runBatch,syncStatus} from './jobs.js';
 import {buildPlan} from '../shared/planning.js';
+import {publishRoutes,publishingSchemaReady} from './publish.js';
+import {commandRoutes} from './command.js';
+import {customReportRoutes,customReportSchemaReady} from './custom-report.js';
+import {brandingRoutes,readBranding} from './branding.js';
 const dist=fileURLToPath(new URL('../dist/',import.meta.url));
 export function createApp(){
  const app=express();app.disable('x-powered-by');app.set('trust proxy',1);
@@ -23,11 +27,14 @@ export function createApp(){
   if(config.production)res.set('Strict-Transport-Security','max-age=31536000');next();
  });
  app.use(express.json({limit:'512kb'}));
- app.get('/api/health',(req,res)=>res.json({ok:true,service:'Coastal Ads Command Center',release:'0.3.0',frontend:existsSync(dist+'index.html')}));
+ app.get('/api/health',(req,res)=>res.json({ok:true,service:'Coastal Ads Command Center',release:'0.5.0',frontend:existsSync(dist+'index.html')}));
  app.get('/api/ready',async(req,res)=>{
   const c=configuration();let database=false;try{const locks=await query('SELECT id FROM app_locks WHERE id=1');await query('SELECT id FROM users LIMIT 1');database=locks.length===1;}catch{}
   let upgraded=false;try{upgraded=await monitoringSchemaReady();await query('SELECT id FROM media_assets LIMIT 1');}catch{upgraded=false;}
-  const ready=database&&upgraded&&c.session&&c.origin&&existsSync(dist+'index.html');res.status(ready?200:503).json({ready,database,upgradeSchema:upgraded,frontend:existsSync(dist+'index.html'),sessionConfigured:c.session,originConfigured:c.origin});
+  let publishing=false;try{publishing=await publishingSchemaReady();}catch{}
+  let customReports=false;try{customReports=await customReportSchemaReady();}catch{}
+  let branding=false;try{branding=(await readBranding()).configured;}catch{}
+  const ready=database&&upgraded&&publishing&&customReports&&branding&&c.session&&c.origin&&existsSync(dist+'index.html');res.status(ready?200:503).json({ready,database,upgradeSchema:upgraded,publishingSchema:publishing,customReportSchema:customReports,brandingSchema:branding,frontend:existsSync(dist+'index.html'),sessionConfigured:c.session,originConfigured:c.origin});
  });
  app.use('/api',(req,res,next)=>{res.set('Cache-Control','no-store');next();});
  app.use('/api',originGuard);
@@ -35,16 +42,23 @@ export function createApp(){
   if(!strongSecret(config.jobSecret)||!constantEqual(req.get('authorization')||'',`Bearer ${config.jobSecret}`))throw httpError(401,'Scheduler authorization failed.');
   res.json(await runBatch({source:'https-scheduler',budgetMs:15000,maxJobs:12}));
  });
+ app.get('/api/branding',async(req,res)=>res.json(await readBranding()));
  app.use('/api',attachSession);
- app.use('/api',authRoutes());app.use('/api/meta',metaRoutes());app.use('/api/media',mediaRoutes());app.use('/api/finance',financeRoutes());
+ app.use('/api',authRoutes());app.use('/api/meta',metaRoutes());app.use('/api/media',mediaRoutes());app.use('/api/finance',financeRoutes());app.use('/api/publish',publishRoutes());app.use('/api/command',commandRoutes());app.use('/api/custom-reports',customReportRoutes());app.use('/api/branding',brandingRoutes());
  app.get('/api/overview',requireAuth,async(req,res)=>res.json(await overview(Number(req.query.days)||7)));
- app.get('/api/settings',requireAuth,async(req,res)=>res.json({configuration:configuration(),monitorEnabled:config.monitor,monitoring:await monitorSettings(),reportIntervalHours:config.reportIntervalHours,model:config.ai.model,dailyMax:config.ai.dailyMax,maxAccounts:12,features:{livePublishing:false,largeVideoUpload:true,uploadRequiresR2:true,conversionDestinations:true,accountDailySpend:true,billingBalance:true,rollingHourlyInsights:true,configurableAutoSync:true,readOnlyAI:true}}));
+ app.get('/api/settings',requireAuth,async(req,res)=>res.json({configuration:configuration(),monitorEnabled:config.monitor,monitoring:await monitorSettings(),reportIntervalHours:config.reportIntervalHours,branding:await readBranding(),model:config.ai.model,dailyMax:config.ai.dailyMax,maxAccounts:null,accountSelection:'all_authorized_mapped',features:{pausedPublishing:config.publishEnabled,activationAvailable:config.activationEnabled,requiresActivationApproval:true,aiCommandCenter:true,largeVideoUpload:true,uploadRequiresR2:true,conversionDestinations:true,accountDailySpend:true,billingBalance:true,rollingHourlyInsights:true,configurableAutoSync:true,readOnlyAI:true}}));
  app.use('/api/settings/monitoring',monitoringRoutes());
  app.get('/api/sync/status',requireAuth,async(req,res)=>res.json(await syncStatus()));
  app.post('/api/sync/all',requireRole('super_admin','manager'),csrfGuard,async(req,res)=>{await limit('sync-all:'+req.user.id,5,5);res.status(202).json(await enqueueAll());});
+ app.post('/api/performance/query',requireAuth,csrfGuard,async(req,res)=>{
+  const period=String(req.body?.period||'today');
+  const ids=req.body?.accountIds;
+  if(!Array.isArray(ids)||new Set(ids).size!==ids.length||ids.some(x=>typeof x!=='string'||!/^act_\d+$/.test(x)))throw httpError(400,'Select unique valid mapped account IDs.');
+  res.json(await performance(period,ids));
+ });
  app.get('/api/performance',requireAuth,async(req,res)=>{
   const ids=req.query.accounts===undefined?undefined:String(req.query.accounts).split(',').filter(Boolean);
-  if(ids&&(ids.length>12||ids.some(x=>!/^act_\d+$/.test(x))))throw httpError(400,'Select up to 12 valid account IDs.');
+  if(ids&&(ids.some(x=>!/^act_\d+$/.test(x))))throw httpError(400,'Select unique valid account IDs.');
   res.json(await performance(String(req.query.period||'today'),ids));
  });
  app.post('/api/accounts/:accountId/sync',requireRole('super_admin','manager'),csrfGuard,async(req,res)=>{
@@ -72,7 +86,6 @@ export function createApp(){
   if(req.user.role!=='super_admin'&&Number(d.created_by)!==Number(req.user.id))throw httpError(403,'Only the author or administrator can delete this draft.');
   await query('DELETE FROM campaign_drafts WHERE id=?',[req.params.id]);await audit(req.user.id,'draft_deleted',req.params.id);res.json({ok:true});
  });
- app.post('/api/publish',requireRole('super_admin','manager'),csrfGuard,(req,res)=>res.status(501).json({code:'PUBLISHING_NOT_IMPLEMENTED',message:'This release cannot create, activate or change ads. Bulk publishing is a later tested milestone.'}));
  app.get('/api/reports',requireAuth,async(req,res)=>res.json({reports:await query('SELECT id,status,model,period_days,error_code,input_tokens,output_tokens,created_at FROM ai_reports ORDER BY created_at DESC LIMIT 100')}));
  app.get('/api/reports/:id',requireAuth,async(req,res)=>res.json(await getReport(req.params.id)));
  app.post('/api/reports',requireRole('super_admin','manager'),csrfGuard,async(req,res)=>{

@@ -29,7 +29,7 @@ CREATE TABLE IF NOT EXISTS draft_media (
  PRIMARY KEY(draft_id,media_id),
  FOREIGN KEY(draft_id) REFERENCES campaign_drafts(id) ON DELETE CASCADE,
  FOREIGN KEY(media_id) REFERENCES media_assets(id)
-) ENGINE=InnoDB;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 CREATE TABLE IF NOT EXISTS account_spend_daily (
  account_id VARCHAR(64) NOT NULL,day DATE NOT NULL,
  currency VARCHAR(10) NOT NULL,timezone_name VARCHAR(80) NOT NULL,
@@ -37,4 +37,4 @@ CREATE TABLE IF NOT EXISTS account_spend_daily (
  synced_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
  PRIMARY KEY(account_id,day),
  FOREIGN KEY(account_id) REFERENCES ad_accounts(account_id) ON DELETE CASCADE
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;

@@ -1,1 +1,0 @@
-Server/shared/test JavaScript syntax passed. JSX is checked by npm run build.
