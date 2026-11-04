@@ -60,6 +60,21 @@ export function metaRoutes(){
    await audit(req.user.id,'meta_connected');res.redirect('/?tab=accounts&meta=connected');
   }catch(e){console.error(JSON.stringify({event:'oauth_failed',code:e.code||'META_ERROR'}));res.redirect('/?tab=accounts&meta=failed');}
  });
+ r.get('/pages',requireAuth,async(req,res)=>{
+  // Optional convenience lookup. Page visibility depends on the Login for Business
+  // granted permissions; manually entering a Page ID remains supported.
+  const connections=await query('SELECT id FROM meta_connections ORDER BY connected_at DESC LIMIT 5');
+  const pages=new Map(),warnings=[];
+  for(const conn of connections){
+   try{
+    const token=await connectionToken(conn.id);
+    const result=await graph('me/accounts',token,{fields:'id,name',limit:100});
+    for(const page of result.data||[])if(/^\d{5,40}$/.test(String(page.id||'')))pages.set(String(page.id),{id:String(page.id),name:String(page.name||page.id).slice(0,150)});
+    if(result.paging?.next)warnings.push('Additional Pages may exist. Enter an authorized Page ID manually if it is not listed.');
+   }catch(e){warnings.push('Meta did not allow Page discovery for one connection. Confirm pages_show_list permission or enter the Page ID manually.');}
+  }
+  res.json({pages:[...pages.values()],warnings});
+ });
  r.get('/connections',requireAuth,async(req,res)=>res.json({connections:await query('SELECT id,meta_user_id,expires_at,connected_at FROM meta_connections ORDER BY connected_at DESC')}));
  r.post('/discover',requireRole('super_admin'),csrfGuard,async(req,res)=>{
   metaConfigured();const id=String(req.body.connectionId||'');const token=await connectionToken(id);

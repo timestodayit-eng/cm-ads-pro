@@ -25,9 +25,8 @@ async function draftForPublish(id){
   if(!a||a.currency!==result.plan.currency)throw err('ACCOUNT_MISMATCH','Selected account is unmapped or currency does not match.',422);
   if(a.account_status!==null&&Number(a.account_status)!==1)throw err('ACCOUNT_NOT_ACTIVE',`Ad account ${allocation.label} is not active.`,422);
  }
- // The first release intentionally limits targeting country to BD; no free-form
- // locations or unsupported Pixel optimization are guessed.
- for(const allocation of result.plan.allocations){if(!/^bangladesh$/i.test(allocation.location))throw err('GEO_NOT_VERIFIED','Only Bangladesh country targeting is implemented. Other geography requires verified Meta targeting IDs.',422);}
+ // Country targeting is now validated by normalizeAdvanced() and Meta will
+ // check market eligibility. No untrusted arbitrary targeting objects are forwarded.
  return{...result,input,draft:d};
 }
 async function validateRequest(body){
@@ -62,6 +61,23 @@ export async function publishingSchemaReady(){
 }
 export function publishRoutes(){
  const r=Router();r.use(requireAuth);
+ // Read-only diagnostics. Do not expose tokens, app IDs, secret values, or remote account details.
+ // This route must remain accessible when the publishing migration is missing.
+ r.get('/readiness',async(req,res)=>{
+  const schemaReady=await publishingSchemaReady();
+  const conf=configuration();
+  const [connected]=await query('SELECT COUNT(*) AS total FROM meta_connections');
+  const [mapped]=await query('SELECT COUNT(*) AS total FROM ad_accounts WHERE slot IS NOT NULL');
+  const issues=[];
+  if(!schemaReady)issues.push({code:'PUBLISH_SCHEMA_REQUIRED',message:'Publishing tables are missing. Back up your database, then import sql/004-publishing.sql (only if it was not already imported).'});
+  if(!conf.meta)issues.push({code:'META_NOT_CONFIGURED',message:'Meta OAuth settings do not match the current APP_ORIGIN or are incomplete.'});
+  if(!conf.encryption)issues.push({code:'ENCRYPTION_NOT_CONFIGURED',message:'TOKEN_ENCRYPTION_KEY is not configured correctly.'});
+  if(!conf.storage)issues.push({code:'R2_NOT_CONFIGURED',message:'Cloudflare R2 storage settings are incomplete.'});
+  if(!Number(connected?.total||0))issues.push({code:'META_NOT_CONNECTED',message:'Connect Facebook Login for Business in Meta Accounts.'});
+  if(!Number(mapped?.total||0))issues.push({code:'ACCOUNTS_NOT_MAPPED',message:'Select and map Meta ad accounts in Meta Accounts.'});
+  if(!config.publishEnabled)issues.push({code:'PUBLISH_DISABLED',message:'PUBLISH_ENABLED is false in your Hostinger environment. Only enable after database, Meta and a single-account paused test are ready.'});
+  return res.json({schemaReady,metaConfigured:conf.meta,encryptionConfigured:conf.encryption,storageConfigured:conf.storage,connectionPresent:Number(connected?.total||0)>0,mappedAccounts:Number(mapped?.total||0),pausedCreationEnabled:config.publishEnabled,activationEnabled:config.activationEnabled,schedulerSecretConfigured:conf.scheduler||!!(config.jobSecret&&config.jobSecret.length>=32),issues,notice:'Configuration checks are local. They cannot verify Meta publishing permission, Page eligibility, or ad approval. Activation requires a second human approval.'});
+ });
  r.use(async(req,res,next)=>{if(!await publishingSchemaReady())throw err('PUBLISH_SCHEMA_REQUIRED','Import sql/004-publishing.sql on your existing v0.3 database, then restart.',503);next();});
  r.get('/batches',async(req,res)=>{
   const rows=await query('SELECT id,draft_id,status,currency,combined_daily_minor,created_at FROM publish_batches ORDER BY created_at DESC LIMIT 60');
@@ -199,7 +215,7 @@ export async function processPublishStep(runId){
    await advance(row,{stage:'adset'});
   }else if(row.stage==='adset'){
    await inflight(row,'create_adset');
-   const data=await metaWrite(`${row.account_id}/adsets`,token,metaAdsetForm(plan,allocation,content,row.campaign_id,row.content_index));
+   const data=await metaWrite(`${row.account_id}/adsets`,token,metaAdsetForm(plan,allocation,content,row.campaign_id,row.content_index,pageId));
    if(!/^\d+$/.test(String(data.id||'')))throw err('META_ADSET_ID_MISSING','Meta returned no ad-set ID.');
    await query("UPDATE publish_items SET adset_id=?,status='adset_created' WHERE id=?",[data.id,item.id]);
    await advance(row,{stage:'creative'});

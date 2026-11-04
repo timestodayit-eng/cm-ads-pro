@@ -17,3 +17,9 @@ test('publisher refuses unverified pixel goals',()=>{const d=campaign();d.conver
 test('publisher creates image creative with Page ID and CTA',()=>{const p=previewPublishing(campaign());const out=metaCreativeForm(p.plan,p.plan.allocations[0],p.plan.contents[0],{kind:'image',image_hash:'hash123'},'1234567890','abc');assert.equal(out.object_story_spec.page_id,'1234567890');assert.equal(out.object_story_spec.link_data.image_hash,'hash123');assert.equal(out.object_story_spec.link_data.call_to_action.type,'LEARN_MORE');});
 test('publisher uses tel destination for call ad',()=>{const d=campaign();d.conversion={type:'CALL',goal:'CALLS',phone:'+8801969918811'};d.contents[0].cta='CALL_NOW';const p=previewPublishing(d);const out=metaCreativeForm(p.plan,p.plan.allocations[0],p.plan.contents[0],{kind:'video',meta_media_id:'12345'},'1234567890','abc');assert.equal(out.object_story_spec.video_data.call_to_action.value.link,'tel:+8801969918811');});
 test('publisher calculates increasing budgets across 12 accounts',()=>{const d=campaign();d.targets=Array.from({length:12},(_,i)=>({accountId:`act_${i+10000}`,label:'CM-'+i,ageMin:18,ageMax:65,location:'Bangladesh'}));const p=previewPublishing(d);assert.equal(p.expected.accounts,12);assert.equal(p.plan.allocations[0].totalDailyMinor,1000);assert.equal(p.plan.allocations[11].totalDailyMinor,3200);assert.equal(p.expected.combinedDailyMinor,25200);});
+
+test('click-to-call declares phone call conversion location and Page on ad set',()=>{
+ const d=campaign();d.conversion={type:'CALL',goal:'CALLS',phone:'+8801969918811'};
+ const p=previewPublishing(d);const f=metaAdsetForm(p.plan,p.plan.allocations[0],p.plan.contents[0],'111',0,'1234567890');
+ assert.equal(f.destination_type,'PHONE_CALL');assert.deepEqual(f.promoted_object,{page_id:'1234567890'});
+});

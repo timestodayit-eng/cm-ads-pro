@@ -1,3 +1,5 @@
+> v0.6 uses the same fresh-install schema as v0.5: `sql/FRESH-INSTALL-v0.5.sql`. See `INSTALL-v0.6.md`.
+
 # Fresh installation v0.4
 
 **Follow `START-HERE.md`.**

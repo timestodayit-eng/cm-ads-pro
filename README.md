@@ -1,3 +1,9 @@
+**v0.7 update:** Audience (Broad, Advantage+, permitted Manual), placement selection, Reach/Impressions frequency settings and bidding controls in Easy Ads and Campaign Workspace. Details and caveats: [v0.7 Advanced Delivery](docs/V07-ADVANCED-DELIVERY.md); upgrade: [INSTALL-v0.7](INSTALL-v0.7.md).
+
+# v0.7 Advanced Ads Delivery (based on v0.6 Easy Ads)
+
+See [INSTALL-v0.6.md](INSTALL-v0.6.md) for the new one-screen ad setup, diagnostics and safe upgrade.
+
 # Coastal Ads Command Center v0.5
 
 Source release: **AI Command Center + Meta PAUSED Publishing (beta)**.

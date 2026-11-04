@@ -11,7 +11,14 @@ export async function metaWrite(path,token,params,{timeoutMs=55000}={}){
  for(const [k,v] of Object.entries(params||{}))if(v!==undefined&&v!==null)form.set(k,typeof v==='object'?JSON.stringify(v):String(v));
  const response=await fetch(url,{method:'POST',headers:{Authorization:`Bearer ${token}`,'Content-Type':'application/x-www-form-urlencoded'},body:form,signal:AbortSignal.timeout(timeoutMs)});
  const data=await response.json().catch(()=>({}));
- if(!response.ok||data.error){const e=httpError(502,'Meta rejected the request. Check the response error code, permissions and campaign settings.','META_WRITE_'+String(data.error?.code||response.status));e.metaRejected=true;e.metaSubcode=String(data.error?.error_subcode||'');throw e;}
+ if(!response.ok||data.error){
+  // Meta's human-facing error title is useful to a logged-in campaign manager.
+  // Never echo raw request parameters, access tokens, debug payloads or signed R2 links.
+  const title=String(data.error?.error_user_title||'').replace(/https?:\/\/\S+/gi,'[link]').replace(/EA[A-Za-z0-9_-]{20,}/g,'[token]').slice(0,140);
+  const message=title?`Meta rejected this operation: ${title}. Check the account, Page and campaign settings.`:'Meta rejected the request. Check the response error code, permissions and campaign settings.';
+  const e=httpError(502,message,'META_WRITE_'+String(data.error?.code||response.status));
+  e.metaRejected=true;e.metaSubcode=String(data.error?.error_subcode||'');throw e;
+ }
  return data;
 }
 function storageClient(){

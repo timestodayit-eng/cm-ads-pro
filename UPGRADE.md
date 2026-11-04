@@ -15,3 +15,7 @@ See `START-HERE.md` and `docs/PUBLISHING-AND-COMMAND.md`.
 3. Upload all source files to the repository root and run `npm test` and `npm run build` on GitHub Actions, then redeploy Express on Hostinger.
 4. Open Settings → Panel name (Super Admin only) and Custom reports.
 5. No additional env secrets are required by the two new features.
+
+## Upgrade from v0.5 to v0.6
+
+Back up the existing database and upload updated source. There is no new SQL migration if your v0.5 schema is already complete. Publishing remains controlled by PUBLISH_ENABLED and ACTIVATION_ENABLED: see `INSTALL-v0.6.md`. Do not reset MySQL.

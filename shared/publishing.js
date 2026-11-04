@@ -1,4 +1,5 @@
 import {buildPlan} from './planning.js';
+import {targetingSpec,advancedWarnings} from './advanced.js';
 const accountRE=/^act_[0-9]+$/;
 const idRE=/^[0-9]{5,40}$/;
 const recruitmentRE=/(?:recruit|hiring|vacancy|jobs?\b|employment|worker|salary|work abroad|\u09a8\u09bf\u09df\u09cb\u0997|\u099a\u09be\u0995\u09b0\u09bf|\u0995\u09b0\u09cd\u09ae\u09c0|\u09ac\u09c7\u09a4\u09a8)/i;
@@ -14,6 +15,7 @@ export function policyPreflight(plan){
   for(const a of plan.allocations){if(a.ageMin!==18||a.ageMax!==65)throw new Error('Employment targeting restrictions: use broad ages 18-65+; age variations require separate Meta eligibility review.');}
   warnings.push('Employment special-ad rules and account eligibility must be verified by Meta; creation may be rejected.');
  }
+ warnings.push(...advancedWarnings(plan.advanced,plan.category));
  if(plan.conversion.type==='CALL')warnings.push('Call-to-action availability and click-to-call delivery depend on Meta objective, placement and account eligibility. A CTA click is not a completed call.');
  warnings.push('All campaigns, ad sets and ads are created PAUSED. No spend starts until explicit activation approval.');
  return warnings;
@@ -30,11 +32,21 @@ export function normalizePageMap(map,allocations){
  const result={};for(const a of allocations){if(!accountRE.test(a.accountId))throw new Error('Invalid account selection.');result[a.accountId]=validatePageId(map[a.accountId]);}
  return result;
 }
-export function metaCampaignForm(plan,tag){return{name:`${plan.name} [${tag}]`,objective:'OUTCOME_TRAFFIC',buying_type:'AUCTION',status:'PAUSED',special_ad_categories:plan.category==='employment'?['EMPLOYMENT']:[],bid_strategy:'LOWEST_COST_WITHOUT_CAP'};}
-export function metaAdsetForm(plan,allocation,content,metaCampaignId,index){
+export function metaCampaignForm(plan,tag){const advanced=plan.advanced;return{name:`${plan.name} [${tag}]`,objective:advanced.delivery.performance==='DEFAULT'?'OUTCOME_TRAFFIC':'OUTCOME_AWARENESS',buying_type:'AUCTION',status:'PAUSED',special_ad_categories:plan.category==='employment'?['EMPLOYMENT']:[],...(advanced.delivery.bidStrategy==='LOWEST_COST_WITHOUT_CAP'?{bid_strategy:'LOWEST_COST_WITHOUT_CAP'}:{})};}
+export function metaAdsetForm(plan,allocation,content,metaCampaignId,index,pageId=null){
  const item=allocation.adsets[index];if(!item||item.dailyMinor<1)throw new Error('Invalid allocated adset daily budget.');
- const targeting={geo_locations:{countries:['BD']},age_min:allocation.ageMin,age_max:allocation.ageMax};
- const form={name:`${plan.name} / ${content.title}`.slice(0,250),campaign_id:metaCampaignId,daily_budget:item.dailyMinor,billing_event:'IMPRESSIONS',optimization_goal:plan.conversion.type==='WEBSITE'?plan.conversion.goal:'LINK_CLICKS',bid_strategy:'LOWEST_COST_WITHOUT_CAP',targeting,status:'PAUSED'};
+ const targeting=targetingSpec(plan.advanced,allocation);
+ const delivery=plan.advanced.delivery;
+ const goal=delivery.performance==='DEFAULT'?(plan.conversion.type==='WEBSITE'?plan.conversion.goal:'LINK_CLICKS'):delivery.performance;
+ const form={name:`${plan.name} / ${content.title}`.slice(0,250),campaign_id:metaCampaignId,daily_budget:item.dailyMinor,billing_event:'IMPRESSIONS',optimization_goal:goal,bid_strategy:delivery.bidStrategy,targeting,status:'PAUSED'};
+ if(delivery.bidStrategy!=='LOWEST_COST_WITHOUT_CAP')form.bid_amount=Math.round(Number(delivery.bidAmount)*100);
+ if(delivery.frequencyCap)form.frequency_control_specs=[{event:'IMPRESSIONS',interval_days:delivery.frequencyCap.days,max_frequency:delivery.frequencyCap.count}];
+ if(plan.conversion.type==='CALL'){
+  // A click-to-call conversion location must be declared on the ad set, not
+  // inferred solely from the CALL_NOW button in the creative.
+  form.destination_type='PHONE_CALL';
+  if(pageId)form.promoted_object={page_id:validatePageId(pageId)};
+ }
  if(allocation.startAt)form.start_time=new Date(allocation.startAt).toISOString();
  if(allocation.endAt)form.end_time=new Date(allocation.endAt).toISOString();
  return form;

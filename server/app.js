@@ -27,7 +27,7 @@ export function createApp(){
   if(config.production)res.set('Strict-Transport-Security','max-age=31536000');next();
  });
  app.use(express.json({limit:'512kb'}));
- app.get('/api/health',(req,res)=>res.json({ok:true,service:'Coastal Ads Command Center',release:'0.5.0',frontend:existsSync(dist+'index.html')}));
+ app.get('/api/health',(req,res)=>res.json({ok:true,service:'Coastal Ads Command Center',release:'0.6.0',frontend:existsSync(dist+'index.html')}));
  app.get('/api/ready',async(req,res)=>{
   const c=configuration();let database=false;try{const locks=await query('SELECT id FROM app_locks WHERE id=1');await query('SELECT id FROM users LIMIT 1');database=locks.length===1;}catch{}
   let upgraded=false;try{upgraded=await monitoringSchemaReady();await query('SELECT id FROM media_assets LIMIT 1');}catch{upgraded=false;}

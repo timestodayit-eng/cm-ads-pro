@@ -1,3 +1,4 @@
+import {normalizeAdvanced} from './advanced.js';
 function fail(message){throw Object.assign(new Error(message),{status:400,code:'INVALID_DRAFT'});}
 export function budgetMinor(value){
  if(value===null||value===undefined||String(value).trim()==='')fail('Enter a budget amount.');
@@ -64,7 +65,9 @@ export function buildPlan(draft){
   const websiteUrl=conversion?.type==='WEBSITE'?httpsDestination(t.websiteUrl||conversion.websiteUrl):'';
   Object.assign(a,{ageMin,ageMax,phone,websiteUrl,location:String(t.location||'Bangladesh').slice(0,150),startAt:t.startAt||null,endAt:t.endAt||null});
  });
- return {name,currency:draft.currency,category:draft.category==='employment'?'employment':'none',budgetMode:'AD_SET',budgetScope:draft.budgetScope||'PER_ADSET',conversion,contents:creatives,allocations,
+ const category=draft.category==='employment'?'employment':'none';
+ const advanced=normalizeAdvanced(draft.advanced,category,conversion);
+ return {name,currency:draft.currency,category,advanced,budgetMode:'AD_SET',budgetScope:draft.budgetScope||'PER_ADSET',conversion,contents:creatives,allocations,
   totals:{campaigns:allocations.length,adsets:allocations.length*creatives.length,ads:allocations.length*creatives.length,dailyMinor:allocations.reduce((s,x)=>s+x.totalDailyMinor,0)},
-  warnings:['Saved plan only: this release does not publish or modify Meta ads.','Category, destination eligibility, Pixel events, targeting and minimum Meta budgets must be validated before publishing.','Daily budgets are planning values, not guaranteed exact daily charges.','The increment applies between selected accounts in the displayed order, not automatically over time.']};
+  warnings:['Saving a plan does not publish ads. Live creation requires a separate paused publishing approval and a configured Meta connection.','Category, destination eligibility, Pixel events, targeting and minimum Meta budgets must be validated before publishing.','Daily budgets are planning values, not guaranteed exact daily charges.','The increment applies between selected accounts in the displayed order, not automatically over time.']};
 }

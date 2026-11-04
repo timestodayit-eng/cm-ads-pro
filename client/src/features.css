@@ -37,3 +37,22 @@
 .report-total-list span{font-size:10px;color:#74889a;display:block}.report-total-list strong{font-size:19px;color:#15426c;display:block;margin-top:5px}
 .custom-result{margin-top:20px}
 @media(max-width:750px){.report-fields{grid-template-columns:1fr}.sidebar-brand-title{max-width:160px}.brand-name-actions{align-items:start}}
+
+/* Easy Ads wizard. Responsive, plain-language controls; never hides the spend approval. */
+.easy-indicators{display:flex;flex-wrap:wrap;gap:10px;margin:16px 0}
+.easy-indicator{padding:8px 11px;border-radius:10px;font-size:.88rem;background:var(--surface-2,#f2f6fa);border:1px solid rgba(127,139,155,.25)}
+.easy-indicator.yes{border-color:#92c9a6}.easy-indicator.no{border-color:#e6b77a}
+.easy-account-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(235px,1fr));gap:9px;max-height:330px;overflow:auto;padding:5px 1px}
+.easy-account{display:flex;align-items:flex-start;gap:10px;border:1px solid rgba(120,140,160,.24);border-radius:11px;padding:11px;cursor:pointer;min-width:0}
+.easy-account.selected{border-color:#4092c4;background:rgba(64,146,196,.07)}
+.easy-account input{margin-top:3px}.easy-account span{display:flex;flex-direction:column;gap:2px;min-width:0;overflow-wrap:anywhere}.easy-account small{opacity:.7;font-size:.75rem}
+.easy-actions{display:flex;align-items:flex-end;gap:8px;flex-wrap:wrap}.easy-creative{border:1px solid rgba(127,139,155,.24);border-radius:13px;padding:16px;margin:15px 0}
+.easy-mode{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin:16px 0}.easy-override-list{max-height:430px;overflow:auto;display:grid;gap:7px;padding:10px 0}
+.easy-approval{display:flex;align-items:flex-start;gap:10px;padding:14px 0;line-height:1.5}.easy-approval input{margin-top:5px;flex:none}
+.easy-results{display:grid;gap:10px}.easy-result{display:flex;flex-wrap:wrap;gap:8px;justify-content:space-between;border:1px solid rgba(127,139,155,.25);padding:10px;border-radius:10px}.easy-result small{width:100%;overflow-wrap:anywhere}
+@media(max-width:680px){.easy-mode{grid-template-columns:1fr}.easy-account-grid{grid-template-columns:1fr}.easy-creative{padding:10px}}
+/* v0.7 advanced audience, placement and delivery controls */
+.advanced-ads{border-top:3px solid #0071bc}.advanced-ads-group{padding:17px 0;border-top:1px solid #e3eaf1}.advanced-ads-group h3{margin:0 0 15px;font-size:15px;color:#15426c}
+.advanced-check-row{display:flex;flex-wrap:wrap;gap:8px;margin:9px 0}.advanced-chip{display:flex;align-items:center;gap:7px;border:1px solid #dce7ee;border-radius:9px;padding:8px 11px;font-size:12px;cursor:pointer}.advanced-chip:has(input:checked){background:#eaf6ff;border-color:#0071bc}.advanced-chip input{accent-color:#0071bc}.advanced-placement-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px;margin:14px 0}.advanced-placement-group{padding:15px;border:1px solid #dce6ef;border-radius:12px;display:flex;flex-direction:column;gap:11px;min-width:0}.advanced-placement-group>strong{color:#15426c;font-size:13px}.advanced-placement-group label{display:flex;align-items:center;gap:9px;font-size:12px}.advanced-placement-group input{accent-color:#0071bc}.advanced-frequency-toggle{display:flex;align-items:center;gap:11px;margin:15px 0;font-size:13px}.advanced-frequency-toggle input{accent-color:#0071bc}
+@media(max-width:650px){.advanced-placement-grid{grid-template-columns:1fr}.advanced-ads .fields.three{grid-template-columns:1fr}}
+.easy-settings-preview{padding:13px;background:#edf6fc;border:1px solid #dceaf3;border-radius:10px;font-size:12px;line-height:1.8;margin:12px 0;overflow-wrap:anywhere}
