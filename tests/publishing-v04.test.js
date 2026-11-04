@@ -7,6 +7,7 @@ test('publisher validates distinct account page IDs',()=>{assert.deepEqual(norma
 test('publication creates paused campaign and adset with budget',()=>{
  const p=previewPublishing(campaign());assert.equal(p.expected.combinedDailyMinor,1000);
  assert.equal(metaCampaignForm(p.plan,'run').status,'PAUSED');
+ assert.equal(metaCampaignForm(p.plan,'run').is_adset_budget_sharing_enabled,false);
  assert.deepEqual(metaCampaignForm(p.plan,'run').special_ad_categories,['EMPLOYMENT']);
  const adset=metaAdsetForm(p.plan,p.plan.allocations[0],p.plan.contents[0],'111',0);
  assert.equal(adset.daily_budget,1000);assert.equal(adset.status,'PAUSED');assert.equal(adset.optimization_goal,'LINK_CLICKS');assert.equal(adset.targeting.geo_locations.countries[0],'BD');

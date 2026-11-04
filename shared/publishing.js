@@ -32,7 +32,7 @@ export function normalizePageMap(map,allocations){
  const result={};for(const a of allocations){if(!accountRE.test(a.accountId))throw new Error('Invalid account selection.');result[a.accountId]=validatePageId(map[a.accountId]);}
  return result;
 }
-export function metaCampaignForm(plan,tag){const advanced=plan.advanced;return{name:`${plan.name} [${tag}]`,objective:advanced.delivery.performance==='DEFAULT'?'OUTCOME_TRAFFIC':'OUTCOME_AWARENESS',buying_type:'AUCTION',status:'PAUSED',special_ad_categories:plan.category==='employment'?['EMPLOYMENT']:[],...(advanced.delivery.bidStrategy==='LOWEST_COST_WITHOUT_CAP'?{bid_strategy:'LOWEST_COST_WITHOUT_CAP'}:{})};}
+export function metaCampaignForm(plan,tag){const advanced=plan.advanced;return{name:`${plan.name} [${tag}]`,objective:advanced.delivery.performance==='DEFAULT'?'OUTCOME_TRAFFIC':'OUTCOME_AWARENESS',buying_type:'AUCTION',status:'PAUSED',is_adset_budget_sharing_enabled:false,special_ad_categories:plan.category==='employment'?['EMPLOYMENT']:[],...(advanced.delivery.bidStrategy==='LOWEST_COST_WITHOUT_CAP'?{bid_strategy:'LOWEST_COST_WITHOUT_CAP'}:{})};}
 export function metaAdsetForm(plan,allocation,content,metaCampaignId,index,pageId=null){
  const item=allocation.adsets[index];if(!item||item.dailyMinor<1)throw new Error('Invalid allocated adset daily budget.');
  const targeting=targetingSpec(plan.advanced,allocation);
