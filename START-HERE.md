@@ -1,3 +1,5 @@
+**After updating from v0.7.2, read [FIX-v0.7.3.md](FIX-v0.7.3.md).** No new v0.7.3 SQL migration is required; verify your existing Publishing schema.
+
 # Coastal Ads Command Center v0.4 - Start Here
 
 This is complete **source code**, not a verified, turnkey live Meta advertising service. First run GitHub **Actions -> Build and verify** and resolve any failure. The assistant's environment could run JS unit tests but could not install npm dependencies to verify the React production bundle or conduct a real Meta/R2/MySQL integration test.

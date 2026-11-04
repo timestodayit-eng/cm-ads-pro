@@ -65,9 +65,11 @@ export function buildPlan(draft){
   const websiteUrl=conversion?.type==='WEBSITE'?httpsDestination(t.websiteUrl||conversion.websiteUrl):'';
   Object.assign(a,{ageMin,ageMax,phone,websiteUrl,location:String(t.location||'Bangladesh').slice(0,150),startAt:t.startAt||null,endAt:t.endAt||null});
  });
+ const budgetLevel=draft.budgetLevel||'AD_SET';
+ if(!['AD_SET','CAMPAIGN'].includes(budgetLevel))fail('Select Ad Set Budget or Campaign Budget.');
  const category=draft.category==='employment'?'employment':'none';
  const advanced=normalizeAdvanced(draft.advanced,category,conversion);
- return {name,currency:draft.currency,category,advanced,budgetMode:'AD_SET',budgetScope:draft.budgetScope||'PER_ADSET',conversion,contents:creatives,allocations,
+ return {name,currency:draft.currency,category,advanced,budgetMode:budgetLevel,budgetScope:draft.budgetScope||'PER_ADSET',conversion,contents:creatives,allocations,
   totals:{campaigns:allocations.length,adsets:allocations.length*creatives.length,ads:allocations.length*creatives.length,dailyMinor:allocations.reduce((s,x)=>s+x.totalDailyMinor,0)},
   warnings:['Saving a plan does not publish ads. Live creation requires a separate paused publishing approval and a configured Meta connection.','Category, destination eligibility, Pixel events, targeting and minimum Meta budgets must be validated before publishing.','Daily budgets are planning values, not guaranteed exact daily charges.','The increment applies between selected accounts in the displayed order, not automatically over time.']};
 }

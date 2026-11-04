@@ -184,7 +184,7 @@ export async function processPublishStep(runId){
  try{
   if(row.stage==='campaign'){
    await inflight(row,'create_campaign');
-   const result=await metaWrite(`${row.account_id}/campaigns`,token,metaCampaignForm(plan,row.id.slice(0,8)));
+   const result=await metaWrite(`${row.account_id}/campaigns`,token,metaCampaignForm(plan,row.id.slice(0,8),allocation));
    if(!/^\d+$/.test(String(result.id||'')))throw err('META_CAMPAIGN_ID_MISSING','Meta returned no campaign ID.');
    await advance(row,{stage:'media',campaignId:result.id});
   }else if(row.stage==='media'){
@@ -209,7 +209,7 @@ export async function processPublishStep(runId){
    const mediaSince=new Date(String(item.updated_at||'').replace(' ','T')+'Z').getTime();
    if(Number.isFinite(mediaSince)&&Date.now()-mediaSince>2*60*60*1000)throw err('META_VIDEO_TIMEOUT','Meta video processing exceeded two hours; review the asset manually.');
    const result=await isVideoReady(item.meta_media_id,token);
-   if(!result.ready)return{done:false,delaySeconds:120,status:'waiting_media'};
+   if(!result.ready)return{done:false,delaySeconds:120,status:'waiting_media',videoStatus:result.value};
    await query("UPDATE meta_media_cache SET status='ready' WHERE account_id=? AND media_asset_id=?",[row.account_id,content.mediaAssetId]);
    await query("UPDATE publish_items SET status='asset_ready' WHERE id=?",[item.id]);
    await advance(row,{stage:'adset'});
@@ -264,8 +264,17 @@ export async function processActivationStep(runId){
    await query("UPDATE publish_account_runs SET status='active',activation_stage='complete' WHERE id=?",[row.id]);
   }else throw err('ACTIVATION_BAD_STAGE','Unknown activation state.');
   await updateBatch(row.batch_id);
-  return{done:row.activation_stage==='campaign',status:row.activation_stage==='campaign'?'active':'activating'};
- }catch(e){return failure(row,e);}
+  const [fresh]=await query('SELECT status,activation_stage FROM publish_account_runs WHERE id=?',[row.id]);
+  return{done:fresh.status==='active',status:fresh.status,stage:fresh.activation_stage};
+ }catch(e){
+  // A failed activation may have succeeded remotely before a network/database
+  // interruption. Reassert PAUSED on the parent campaign before returning.
+  // If even this fails, require urgent manual inspection in Meta Ads Manager.
+  let safelyPaused=false;
+  try{if(row.campaign_id){await metaSetStatus({id:row.campaign_id,token,status:'PAUSED'});safelyPaused=true;}}catch{}
+  if(!safelyPaused)return failure(row,err('ACTIVATION_STATUS_UNVERIFIED',`URGENT: Activation outcome is uncertain. Check and PAUSE campaign ${row.campaign_id||'(ID missing)'} directly in Meta Ads Manager.`,502));
+  return failure(row,err('ACTIVATION_HALTED_PAUSED',`Activation failed; campaign ${row.campaign_id} was sent a PAUSE request. Check Meta Ads Manager before retrying.`,502));
+ }
 }
 export async function processPauseStep(runId){
  const {row,account}=await runContext(runId);

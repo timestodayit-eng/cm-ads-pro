@@ -1,0 +1,896 @@
+
+> coastal-ads-command-center@0.7.3 test
+> node --test tests/*.test.js
+
+TAP version 13
+# Subtest: v0.7 legacy plans default to broad Bangladesh and automated placement
+ok 1 - v0.7 legacy plans default to broad Bangladesh and automated placement
+  ---
+  duration_ms: 2.528418
+  type: 'test'
+  ...
+# Subtest: employment cannot select narrow interest, custom audience, gender or manual targeting
+ok 2 - employment cannot select narrow interest, custom audience, gender or manual targeting
+  ---
+  duration_ms: 0.655129
+  type: 'test'
+  ...
+# Subtest: Advantage+ audience and multi-country targeting are forwarded to Meta
+ok 3 - Advantage+ audience and multi-country targeting are forwarded to Meta
+  ---
+  duration_ms: 0.257799
+  type: 'test'
+  ...
+# Subtest: manual facebook and instagram placements are mapped exactly
+ok 4 - manual facebook and instagram placements are mapped exactly
+  ---
+  duration_ms: 0.456339
+  type: 'test'
+  ...
+# Subtest: reject deprecated/unknown placements and blank manual selection
+ok 5 - reject deprecated/unknown placements and blank manual selection
+  ---
+  duration_ms: 0.239442
+  type: 'test'
+  ...
+# Subtest: Reach campaigns map to awareness and frequency cap
+ok 6 - Reach campaigns map to awareness and frequency cap
+  ---
+  duration_ms: 0.478542
+  type: 'test'
+  ...
+# Subtest: frequency cap fails outside Reach, or for call campaigns
+ok 7 - frequency cap fails outside Reach, or for call campaigns
+  ---
+  duration_ms: 0.404932
+  type: 'test'
+  ...
+# Subtest: manual interest IDs for non-employment are validated and passed through
+ok 8 - manual interest IDs for non-employment are validated and passed through
+  ---
+  duration_ms: 0.553757
+  type: 'test'
+  ...
+# Subtest: bid caps are stored in minor account units and unsupported values rejected
+ok 9 - bid caps are stored in minor account units and unsupported values rejected
+  ---
+  duration_ms: 0.456659
+  type: 'test'
+  ...
+# Subtest: reject unknown targeting and object injection via client
+ok 10 - reject unknown targeting and object injection via client
+  ---
+  duration_ms: 0.516691
+  type: 'test'
+  ...
+# Subtest: ABO campaign has no campaign-level budget or bid strategy
+ok 11 - ABO campaign has no campaign-level budget or bid strategy
+  ---
+  duration_ms: 2.485863
+  type: 'test'
+  ...
+# Subtest: call plan has one shared creative set and destination fallback
+ok 12 - call plan has one shared creative set and destination fallback
+  ---
+  duration_ms: 1.863393
+  type: 'test'
+  ...
+# Subtest: phone override only changes one selected account
+ok 13 - phone override only changes one selected account
+  ---
+  duration_ms: 0.287183
+  type: 'test'
+  ...
+# Subtest: call without any phone is rejected
+ok 14 - call without any phone is rejected
+  ---
+  duration_ms: 0.474597
+  type: 'test'
+  ...
+# Subtest: website fallback and account URL override supported
+ok 15 - website fallback and account URL override supported
+  ---
+  duration_ms: 0.322017
+  type: 'test'
+  ...
+# Subtest: website lead optimization requires actual Pixel/dataset format
+ok 16 - website lead optimization requires actual Pixel/dataset format
+  ---
+  duration_ms: 0.354685
+  type: 'test'
+  ...
+# Subtest: website credentials and non-HTTPS schemes rejected
+ok 17 - website credentials and non-HTTPS schemes rejected
+  ---
+  duration_ms: 0.279312
+  type: 'test'
+  ...
+# Subtest: budget scope account total splits integer cents without loss
+ok 18 - budget scope account total splits integer cents without loss
+  ---
+  duration_ms: 0.755501
+  type: 'test'
+  ...
+# Subtest: increment between accounts is not multiplied incorrectly in account-total mode
+ok 19 - increment between accounts is not multiplied incorrectly in account-total mode
+  ---
+  duration_ms: 0.249857
+  type: 'test'
+  ...
+# Subtest: reordering accounts reassigns rule amounts but not overrides
+ok 20 - reordering accounts reassigns rule amounts but not overrides
+  ---
+  duration_ms: 0.316839
+  type: 'test'
+  ...
+# Subtest: optional per-account planning ceiling rejects overspend plan
+ok 21 - optional per-account planning ceiling rejects overspend plan
+  ---
+  duration_ms: 0.499163
+  type: 'test'
+  ...
+# Subtest: zero increment keeps all accounts equal
+ok 22 - zero increment keeps all accounts equal
+  ---
+  duration_ms: 0.175284
+  type: 'test'
+  ...
+# Subtest: linked media IDs are kept, presigned URLs not required
+ok 23 - linked media IDs are kept, presigned URLs not required
+  ---
+  duration_ms: 0.213583
+  type: 'test'
+  ...
+# Subtest: custom report supports more than 12 or 100 unique accounts
+ok 24 - custom report supports more than 12 or 100 unique accounts
+  ---
+  duration_ms: 1.17199
+  type: 'test'
+  ...
+# Subtest: custom report protects against duplicate accounts and unknown metrics
+ok 25 - custom report protects against duplicate accounts and unknown metrics
+  ---
+  duration_ms: 0.348726
+  type: 'test'
+  ...
+# Subtest: report computes account groups without collapsing currencies
+ok 26 - report computes account groups without collapsing currencies
+  ---
+  duration_ms: 1.280594
+  type: 'test'
+  ...
+# Subtest: CSV export shields spreadsheet formula injection
+ok 27 - CSV export shields spreadsheet formula injection
+  ---
+  duration_ms: 0.23847
+  type: 'test'
+  ...
+# Subtest: panel name allows natural Bengali and English, strips whitespace
+ok 28 - panel name allows natural Bengali and English, strips whitespace
+  ---
+  duration_ms: 0.368637
+  type: 'test'
+  ...
+# Subtest: panel name rejects invalid tags, control characters and overlong names
+ok 29 - panel name rejects invalid tags, control characters and overlong names
+  ---
+  duration_ms: 0.217719
+  type: 'test'
+  ...
+# Subtest: postpaid Meta balance is amount due, not prepaid cash
+ok 30 - postpaid Meta balance is amount due, not prepaid cash
+  ---
+  duration_ms: 1.534477
+  type: 'test'
+  ...
+# Subtest: prepaid accounts never use balance as available funds or amount due
+ok 31 - prepaid accounts never use balance as available funds or amount due
+  ---
+  duration_ms: 0.277809
+  type: 'test'
+  ...
+# Subtest: spend cap zero means unlimited/not a known remaining cash amount
+ok 32 - spend cap zero means unlimited/not a known remaining cash amount
+  ---
+  duration_ms: 0.10603
+  type: 'test'
+  ...
+# Subtest: missing and invalid balance are unknown, never zero-filled
+ok 33 - missing and invalid balance are unknown, never zero-filled
+  ---
+  duration_ms: 0.264499
+  type: 'test'
+  ...
+# Subtest: unsupported billing currency divisor is not guessed
+ok 34 - unsupported billing currency divisor is not guessed
+  ---
+  duration_ms: 0.112269
+  type: 'test'
+  ...
+# Subtest: USD and BDT totals are never added together
+ok 35 - USD and BDT totals are never added together
+  ---
+  duration_ms: 0.310038
+  type: 'test'
+  ...
+# Subtest: partial known sums track coverage and preserve unknown overall fields
+ok 36 - partial known sums track coverage and preserve unknown overall fields
+  ---
+  duration_ms: 0.334475
+  type: 'test'
+  ...
+# Subtest: no financial data does not claim all zeroes
+ok 37 - no financial data does not claim all zeroes
+  ---
+  duration_ms: 0.115624
+  type: 'test'
+  ...
+# Subtest: stale account count is preserved in sums
+ok 38 - stale account count is preserved in sums
+  ---
+  duration_ms: 0.426504
+  type: 'test'
+  ...
+# Subtest: boolean and blank strings are not financial numbers
+ok 39 - boolean and blank strings are not financial numbers
+  ---
+  duration_ms: 0.60288
+  type: 'test'
+  ...
+# Subtest: images and videos get fixed safe MIME types from whitelisted extensions
+ok 40 - images and videos get fixed safe MIME types from whitelisted extensions
+  ---
+  duration_ms: 1.214834
+  type: 'test'
+  ...
+# Subtest: one GiB is accepted; one byte larger is rejected
+ok 41 - one GiB is accepted; one byte larger is rejected
+  ---
+  duration_ms: 0.387085
+  type: 'test'
+  ...
+# Subtest: 30 MiB image cap cannot be bypassed with video limit
+ok 42 - 30 MiB image cap cannot be bypassed with video limit
+  ---
+  duration_ms: 0.156707
+  type: 'test'
+  ...
+# Subtest: SVG and HTML are rejected
+ok 43 - SVG and HTML are rejected
+  ---
+  duration_ms: 0.23845
+  type: 'test'
+  ...
+# Subtest: path traversal and control characters in file names rejected
+ok 44 - path traversal and control characters in file names rejected
+  ---
+  duration_ms: 0.296097
+  type: 'test'
+  ...
+# Subtest: incorrect type, fingerprint and empty file rejected
+ok 45 - incorrect type, fingerprint and empty file rejected
+  ---
+  duration_ms: 0.142264
+  type: 'test'
+  ...
+# Subtest: last multipart chunk has exact size
+ok 46 - last multipart chunk has exact size
+  ---
+  duration_ms: 0.220653
+  type: 'test'
+  ...
+# Subtest: parts are sorted and complete list must cover declared byte size
+ok 47 - parts are sorted and complete list must cover declared byte size
+  ---
+  duration_ms: 0.648139
+  type: 'test'
+  ...
+# Subtest: duplicate and oversized chunks rejected
+ok 48 - duplicate and oversized chunks rejected
+  ---
+  duration_ms: 0.284379
+  type: 'test'
+  ...
+# Subtest: binary signature validation rejects renamed HTML and accepts PNG/JPEG
+ok 49 - binary signature validation rejects renamed HTML and accepts PNG/JPEG
+  ---
+  duration_ms: 0.459243
+  type: 'test'
+  ...
+# Subtest: HEIC/AVIF cannot masquerade as MP4
+ok 50 - HEIC/AVIF cannot masquerade as MP4
+  ---
+  duration_ms: 0.174834
+  type: 'test'
+  ...
+# Subtest: initialize stores private key and never exposes upload ID or bucket
+ok 51 - initialize stores private key and never exposes upload ID or bucket
+  ---
+  duration_ms: 0.727829
+  type: 'test'
+  ...
+# Subtest: initialize is idempotent for same client request
+ok 52 - initialize is idempotent for same client request
+  ---
+  duration_ms: 0.230958
+  type: 'test'
+  ...
+# Subtest: client request ID cannot be reused for another file
+ok 53 - client request ID cannot be reused for another file
+  ---
+  duration_ms: 0.246162
+  type: 'test'
+  ...
+# Subtest: initialization failure is recorded instead of claiming upload success
+ok 54 - initialization failure is recorded instead of claiming upload success
+  ---
+  duration_ms: 0.247945
+  type: 'test'
+  ...
+# Subtest: signing checks owner, bounds and number count
+ok 55 - signing checks owner, bounds and number count
+  ---
+  duration_ms: 0.502539
+  type: 'test'
+  ...
+# Subtest: parts endpoint supports safe resume using provider-confirmed parts
+ok 56 - parts endpoint supports safe resume using provider-confirmed parts
+  ---
+  duration_ms: 0.462248
+  type: 'test'
+  ...
+# Subtest: successful complete validates object and adds ready library item
+ok 57 - successful complete validates object and adds ready library item
+  ---
+  duration_ms: 1.885026
+  type: 'test'
+  ...
+# Subtest: complete retry does not create duplicate object
+ok 58 - complete retry does not create duplicate object
+  ---
+  duration_ms: 0.360274
+  type: 'test'
+  ...
+# Subtest: incomplete upload is left resumable
+ok 59 - incomplete upload is left resumable
+  ---
+  duration_ms: 0.293834
+  type: 'test'
+  ...
+# Subtest: wrong-sized completed object is removed and rejected
+ok 60 - wrong-sized completed object is removed and rejected
+  ---
+  duration_ms: 0.360624
+  type: 'test'
+  ...
+# Subtest: completed object with foreign asset metadata is rejected
+ok 61 - completed object with foreign asset metadata is rejected
+  ---
+  duration_ms: 0.233092
+  type: 'test'
+  ...
+# Subtest: database interruption after storage completion is recoverable without re-upload
+ok 62 - database interruption after storage completion is recoverable without re-upload
+  ---
+  duration_ms: 0.296718
+  type: 'test'
+  ...
+# Subtest: upload cannot preview before content verification
+ok 63 - upload cannot preview before content verification
+  ---
+  duration_ms: 0.267754
+  type: 'test'
+  ...
+# Subtest: aborting cancels the multipart session and is idempotent
+ok 64 - aborting cancels the multipart session and is idempotent
+  ---
+  duration_ms: 0.195785
+  type: 'test'
+  ...
+# Subtest: upload cannot be deleted while a saved draft references it
+ok 65 - upload cannot be deleted while a saved draft references it
+  ---
+  duration_ms: 1.240293
+  type: 'test'
+  ...
+# Subtest: expired multipart sessions cannot issue new signed URLs
+ok 66 - expired multipart sessions cannot issue new signed URLs
+  ---
+  duration_ms: 0.231219
+  type: 'test'
+  ...
+# Subtest: default automatic interval is 5 minutes and monitoring enabled in app settings
+ok 67 - default automatic interval is 5 minutes and monitoring enabled in app settings
+  ---
+  duration_ms: 0.856893
+  type: 'test'
+  ...
+# Subtest: settings support custom interval and cannot silently accept 1 minute
+ok 68 - settings support custom interval and cannot silently accept 1 minute
+  ---
+  duration_ms: 0.532965
+  type: 'test'
+  ...
+# Subtest: only booleans accepted and conversion rates positive
+ok 69 - only booleans accepted and conversion rates positive
+  ---
+  duration_ms: 0.224289
+  type: 'test'
+  ...
+# Subtest: FX metadata required and no fake future rate
+ok 70 - FX metadata required and no fake future rate
+  ---
+  duration_ms: 0.651093
+  type: 'test'
+  ...
+# Subtest: 5 minute due boundary exact and temporary backoff respected
+ok 71 - 5 minute due boundary exact and temporary backoff respected
+  ---
+  duration_ms: 0.407946
+  type: 'test'
+  ...
+# Subtest: expired token and rate limits have larger retry windows
+ok 72 - expired token and rate limits have larger retry windows
+  ---
+  duration_ms: 0.341796
+  type: 'test'
+  ...
+# Subtest: FX does not add unknown currencies at 1:1
+ok 73 - FX does not add unknown currencies at 1:1
+  ---
+  duration_ms: 1.074753
+  type: 'test'
+  ...
+# Subtest: FX source-currency amount stays unchanged
+ok 74 - FX source-currency amount stays unchanged
+  ---
+  duration_ms: 0.113691
+  type: 'test'
+  ...
+# Subtest: missing conversions are not zero and clicks never become completed calls
+ok 75 - missing conversions are not zero and clicks never become completed calls
+  ---
+  duration_ms: 0.882493
+  type: 'test'
+  ...
+# Subtest: lead aggregate does not double count overlapping lead action types
+ok 76 - lead aggregate does not double count overlapping lead action types
+  ---
+  duration_ms: 0.495819
+  type: 'test'
+  ...
+# Subtest: explicit lead and call mapping preserves actual zeros
+ok 77 - explicit lead and call mapping preserves actual zeros
+  ---
+  duration_ms: 0.172511
+  type: 'test'
+  ...
+# Subtest: aggregate exposes metric coverage and unique observed actions
+ok 78 - aggregate exposes metric coverage and unique observed actions
+  ---
+  duration_ms: 0.326693
+  type: 'test'
+  ...
+# Subtest: recent hour windows are shared UTC and only close at whole-hour end
+ok 79 - recent hour windows are shared UTC and only close at whole-hour end
+  ---
+  duration_ms: 0.127132
+  type: 'test'
+  ...
+# Subtest: hour labels validated, not silently treated as midnight
+ok 80 - hour labels validated, not silently treated as midnight
+  ---
+  duration_ms: 0.224569
+  type: 'test'
+  ...
+# Subtest: boundary and partial hours are not interpolated
+ok 81 - boundary and partial hours are not interpolated
+  ---
+  duration_ms: 0.202325
+  type: 'test'
+  ...
+# Subtest: twelve accounts with five creatives creates sixty ad-set intents
+ok 82 - twelve accounts with five creatives creates sixty ad-set intents
+  ---
+  duration_ms: 2.99352
+  type: 'test'
+  ...
+# Subtest: budget increments and per-account totals use integer minor units
+ok 83 - budget increments and per-account totals use integer minor units
+  ---
+  duration_ms: 0.567797
+  type: 'test'
+  ...
+# Subtest: manual override affects only selected account
+ok 84 - manual override affects only selected account
+  ---
+  duration_ms: 0.249256
+  type: 'test'
+  ...
+# Subtest: creatives and copy remain shared
+ok 85 - creatives and copy remain shared
+  ---
+  duration_ms: 0.268896
+  type: 'test'
+  ...
+# Subtest: duplicate accounts rejected
+ok 86 - duplicate accounts rejected
+  ---
+  duration_ms: 0.403659
+  type: 'test'
+  ...
+# Subtest: more than twelve authorized accounts can be planned
+ok 87 - more than twelve authorized accounts can be planned
+  ---
+  duration_ms: 0.300373
+  type: 'test'
+  ...
+# Subtest: empty creatives rejected
+ok 88 - empty creatives rejected
+  ---
+  duration_ms: 0.117978
+  type: 'test'
+  ...
+# Subtest: zero budget rejected
+ok 89 - zero budget rejected
+  ---
+  duration_ms: 0.113251
+  type: 'test'
+  ...
+# Subtest: negative resulting budget rejected
+ok 90 - negative resulting budget rejected
+  ---
+  duration_ms: 0.303498
+  type: 'test'
+  ...
+# Subtest: fractional cents rejected
+ok 91 - fractional cents rejected
+  ---
+  duration_ms: 0.336988
+  type: 'test'
+  ...
+# Subtest: invalid age range rejected
+ok 92 - invalid age range rejected
+  ---
+  duration_ms: 0.262346
+  type: 'test'
+  ...
+# Subtest: end before start rejected
+ok 93 - end before start rejected
+  ---
+  duration_ms: 0.174333
+  type: 'test'
+  ...
+# Subtest: insecure media references rejected
+ok 94 - insecure media references rejected
+  ---
+  duration_ms: 0.901081
+  type: 'test'
+  ...
+# Subtest: unknown currency rejected for two-decimal budget builder
+ok 95 - unknown currency rejected for two-decimal budget builder
+  ---
+  duration_ms: 0.11288
+  type: 'test'
+  ...
+# Subtest: ABO campaign has zero campaign budget, opts out of sharing, and declares special-ad country
+ok 96 - ABO campaign has zero campaign budget, opts out of sharing, and declares special-ad country
+  ---
+  duration_ms: 6.553295
+  type: 'test'
+  ...
+# Subtest: CBO explicitly approved uses account combined amount on campaign only, not adsets
+ok 97 - CBO explicitly approved uses account combined amount on campaign only, not adsets
+  ---
+  duration_ms: 0.561227
+  type: 'test'
+  ...
+# Subtest: invalid CBO budget allocation fails instead of creating an unbudgeted campaign
+ok 98 - invalid CBO budget allocation fails instead of creating an unbudgeted campaign
+  ---
+  duration_ms: 0.561187
+  type: 'test'
+  ...
+# Subtest: CBO custom cap is not silently translated into an unapproved campaign bid
+ok 99 - CBO custom cap is not silently translated into an unapproved campaign bid
+  ---
+  duration_ms: 0.40383
+  type: 'test'
+  ...
+# Subtest: Meta video readiness understands the nested video_status object
+ok 100 - Meta video readiness understands the nested video_status object
+  ---
+  duration_ms: 0.287424
+  type: 'test'
+  ...
+# Subtest: Meta error includes useful detail and subcode but redacts credentials
+ok 101 - Meta error includes useful detail and subcode but redacts credentials
+  ---
+  duration_ms: 0.512654
+  type: 'test'
+  ...
+# Subtest: phone creative does not switch advertiser destination when selected separately
+ok 102 - phone creative does not switch advertiser destination when selected separately
+  ---
+  duration_ms: 0.618614
+  type: 'test'
+  ...
+# Subtest: publisher validates distinct account page IDs
+ok 103 - publisher validates distinct account page IDs
+  ---
+  duration_ms: 1.755952
+  type: 'test'
+  ...
+# Subtest: publication creates paused campaign and adset with budget
+ok 104 - publication creates paused campaign and adset with budget
+  ---
+  duration_ms: 2.184799
+  type: 'test'
+  ...
+# Subtest: publisher refuses employment ads with narrowed age
+ok 105 - publisher refuses employment ads with narrowed age
+  ---
+  duration_ms: 0.395256
+  type: 'test'
+  ...
+# Subtest: publisher flags recruitment in undeclared special category
+ok 106 - publisher flags recruitment in undeclared special category
+  ---
+  duration_ms: 0.576721
+  type: 'test'
+  ...
+# Subtest: publisher refuses unverified pixel goals
+ok 107 - publisher refuses unverified pixel goals
+  ---
+  duration_ms: 0.518383
+  type: 'test'
+  ...
+# Subtest: publisher creates image creative with Page ID and CTA
+ok 108 - publisher creates image creative with Page ID and CTA
+  ---
+  duration_ms: 0.574377
+  type: 'test'
+  ...
+# Subtest: publisher uses tel destination for call ad
+ok 109 - publisher uses tel destination for call ad
+  ---
+  duration_ms: 0.308776
+  type: 'test'
+  ...
+# Subtest: publisher calculates increasing budgets across 12 accounts
+ok 110 - publisher calculates increasing budgets across 12 accounts
+  ---
+  duration_ms: 0.51659
+  type: 'test'
+  ...
+# Subtest: click-to-call declares phone call conversion location and Page on ad set
+ok 111 - click-to-call declares phone call conversion location and Page on ad set
+  ---
+  duration_ms: 0.351761
+  type: 'test'
+  ...
+# Subtest: currencies never mixed
+ok 112 - currencies never mixed
+  ---
+  duration_ms: 0.913189
+  type: 'test'
+  ...
+# Subtest: CTR CPC CPM are deterministic
+ok 113 - CTR CPC CPM are deterministic
+  ---
+  duration_ms: 0.114423
+  type: 'test'
+  ...
+# Subtest: related action types are not double counted
+ok 114 - related action types are not double counted
+  ---
+  duration_ms: 0.148324
+  type: 'test'
+  ...
+# Subtest: no divide by zero or fake zero CPA
+ok 115 - no divide by zero or fake zero CPA
+  ---
+  duration_ms: 0.097347
+  type: 'test'
+  ...
+# Subtest: empty data yields no fake metrics
+ok 116 - empty data yields no fake metrics
+  ---
+  duration_ms: 0.561859
+  type: 'test'
+  ...
+# Subtest: report schema requires human review
+ok 117 - report schema requires human review
+  ---
+  duration_ms: 0.100722
+  type: 'test'
+  ...
+# Subtest: grounded report accepted
+ok 118 - grounded report accepted
+  ---
+  duration_ms: 0.303308
+  type: 'test'
+  ...
+# Subtest: invented evidence rejected
+ok 119 - invented evidence rejected
+  ---
+  duration_ms: 0.363609
+  type: 'test'
+  ...
+# Subtest: missing evidence rejected
+ok 120 - missing evidence rejected
+  ---
+  duration_ms: 0.330349
+  type: 'test'
+  ...
+# Subtest: autonomous-action report rejected
+ok 121 - autonomous-action report rejected
+  ---
+  duration_ms: 0.480605
+  type: 'test'
+  ...
+# Subtest: Responses output text extracted
+ok 122 - Responses output text extracted
+  ---
+  duration_ms: 0.358581
+  type: 'test'
+  ...
+# Subtest: incomplete response rejected
+ok 123 - incomplete response rejected
+  ---
+  duration_ms: 0.161484
+  type: 'test'
+  ...
+# Subtest: refusal rejected
+ok 124 - refusal rejected
+  ---
+  duration_ms: 0.155826
+  type: 'test'
+  ...
+# Subtest: password is hashed and correct password verifies
+ok 125 - password is hashed and correct password verifies
+  ---
+  duration_ms: 293.981969
+  type: 'test'
+  ...
+# Subtest: password salts differ
+ok 126 - password salts differ
+  ---
+  duration_ms: 203.535253
+  type: 'test'
+  ...
+# Subtest: short password rejected
+ok 127 - short password rejected
+  ---
+  duration_ms: 0.468988
+  type: 'test'
+  ...
+# Subtest: oversized password rejected
+ok 128 - oversized password rejected
+  ---
+  duration_ms: 0.222837
+  type: 'test'
+  ...
+# Subtest: malformed password hash rejected
+ok 129 - malformed password hash rejected
+  ---
+  duration_ms: 0.269406
+  type: 'test'
+  ...
+# Subtest: authenticated token encryption round trip
+ok 130 - authenticated token encryption round trip
+  ---
+  duration_ms: 0.839978
+  type: 'test'
+  ...
+# Subtest: token encryption is randomized
+ok 131 - token encryption is randomized
+  ---
+  duration_ms: 0.396779
+  type: 'test'
+  ...
+# Subtest: wrong encryption key fails
+ok 132 - wrong encryption key fails
+  ---
+  duration_ms: 0.341326
+  type: 'test'
+  ...
+# Subtest: tampering is detected
+ok 133 - tampering is detected
+  ---
+  duration_ms: 0.392863
+  type: 'test'
+  ...
+# Subtest: invalid encryption key rejected
+ok 134 - invalid encryption key rejected
+  ---
+  duration_ms: 0.334946
+  type: 'test'
+  ...
+# Subtest: constant-time comparison returns expected values
+ok 135 - constant-time comparison returns expected values
+  ---
+  duration_ms: 0.428046
+  type: 'test'
+  ...
+# Subtest: CSRF token bound to session and secret
+ok 136 - CSRF token bound to session and secret
+  ---
+  duration_ms: 0.246031
+  type: 'test'
+  ...
+# Subtest: tokens are unique and digests fixed length
+ok 137 - tokens are unique and digests fixed length
+  ---
+  duration_ms: 0.18548
+  type: 'test'
+  ...
+# Subtest: malformed cookie handled without throwing
+ok 138 - malformed cookie handled without throwing
+  ---
+  duration_ms: 0.376849
+  type: 'test'
+  ...
+# Subtest: email normalization and validation
+ok 139 - email normalization and validation
+  ---
+  duration_ms: 0.211549
+  type: 'test'
+  ...
+# Subtest: Hostinger-style require loads entry even when application uses top-level await
+ok 140 - Hostinger-style require loads entry even when application uses top-level await
+  ---
+  duration_ms: 114.274985
+  type: 'test'
+  ...
+# Subtest: direct node server.js startup remains supported
+ok 141 - direct node server.js startup remains supported
+  ---
+  duration_ms: 90.376259
+  type: 'test'
+  ...
+# Subtest: project .env loads before application import even from a different cwd
+ok 142 - project .env loads before application import even from a different cwd
+  ---
+  duration_ms: 100.80146
+  type: 'test'
+  ...
+# Subtest: hosting environment overrides a value in project .env
+ok 143 - hosting environment overrides a value in project .env
+  ---
+  duration_ms: 103.203342
+  type: 'test'
+  ...
+# Subtest: invalid port exits with sanitized structured startup error
+ok 144 - invalid port exits with sanitized structured startup error
+  ---
+  duration_ms: 43.877484
+  type: 'test'
+  ...
+# Subtest: missing application module is caught without unhandled promise rejection
+ok 145 - missing application module is caught without unhandled promise rejection
+  ---
+  duration_ms: 38.002091
+  type: 'test'
+  ...
+# Subtest: arbitrary startup error payload is not printed to logs
+ok 146 - arbitrary startup error payload is not printed to logs
+  ---
+  duration_ms: 40.591081
+  type: 'test'
+  ...
+# Subtest: port binding failure produces a controlled EADDRINUSE error
+ok 147 - port binding failure produces a controlled EADDRINUSE error
+  ---
+  duration_ms: 68.844522
+  type: 'test'
+  ...
+1..147
+# tests 147
+# suites 0
+# pass 147
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 920.070193

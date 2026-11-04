@@ -2,7 +2,9 @@ import {createHmac} from 'node:crypto';
 import {config,configuration,storageEndpoint} from './config.js';
 import {httpError} from './security.js';
 import {graph} from './meta.js';
+import {describeMetaError,interpretVideoStatus} from '../shared/meta-diagnostics.js';
 let store;
+
 function proof(token){return createHmac('sha256',config.meta.appSecret).update(token).digest('hex');}
 export async function metaWrite(path,token,params,{timeoutMs=55000}={}){
  if(!configuration().meta)throw httpError(503,'Meta configuration is not complete.','META_NOT_CONFIGURED');
@@ -14,9 +16,8 @@ export async function metaWrite(path,token,params,{timeoutMs=55000}={}){
  if(!response.ok||data.error){
   // Meta's human-facing error title is useful to a logged-in campaign manager.
   // Never echo raw request parameters, access tokens, debug payloads or signed R2 links.
-  const title=String(data.error?.error_user_title||'').replace(/https?:\/\/\S+/gi,'[link]').replace(/EA[A-Za-z0-9_-]{20,}/g,'[token]').slice(0,140);
-  const message=title?`Meta rejected this operation: ${title}. Check the account, Page and campaign settings.`:'Meta rejected the request. Check the response error code, permissions and campaign settings.';
-  const e=httpError(502,message,'META_WRITE_'+String(data.error?.code||response.status));
+  const info=describeMetaError(data.error,response.status);
+  const e=httpError(502,info.message,info.code);
   e.metaRejected=true;e.metaSubcode=String(data.error?.error_subcode||'');throw e;
  }
  return data;
@@ -51,11 +52,9 @@ export async function uploadMetaMedia({accountId,token,asset}){
 }
 export async function isVideoReady(videoId,token){
  const res=await graph(String(videoId),token,{fields:'status'});
- const status=res.status?.video_status||res.status?.processing_phase?.status||res.status||'';
- if(typeof status==='object')return{ready:false,error:false};
- const value=String(status).toLowerCase();
- if(/error|fail|reject/.test(value))throw httpError(422,'Meta rejected or failed to process the video.','META_VIDEO_PROCESSING_FAILED');
- return{ready:/ready|complete|finished/.test(value),value};
+ const parsed=interpretVideoStatus(res);
+ if(parsed.failed)throw httpError(422,`Meta rejected video processing (${parsed.value}).`,'META_VIDEO_PROCESSING_FAILED');
+ return{ready:parsed.ready,value:parsed.value};
 }
 export async function metaSetStatus({id,token,status}){
  if(!/^\d+$/.test(id)||!['ACTIVE','PAUSED'].includes(status))throw httpError(400,'Invalid Meta object or status.');

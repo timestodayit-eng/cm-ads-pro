@@ -1,3 +1,5 @@
+**Publishing reliability update (v0.7.3):** See [FIX-v0.7.3.md](FIX-v0.7.3.md) for ABO/CBO choice, safer Meta errors, video status, activation safeguards, and live-testing requirements.
+
 **v0.7 update:** Audience (Broad, Advantage+, permitted Manual), placement selection, Reach/Impressions frequency settings and bidding controls in Easy Ads and Campaign Workspace. Details and caveats: [v0.7 Advanced Delivery](docs/V07-ADVANCED-DELIVERY.md); upgrade: [INSTALL-v0.7](INSTALL-v0.7.md).
 
 # v0.7 Advanced Ads Delivery (based on v0.6 Easy Ads)
