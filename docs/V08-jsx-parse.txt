@@ -1,0 +1,17 @@
+OK client/src/api.js
+OK client/src/components/AICopilot.jsx
+OK client/src/components/AIDocuments.jsx
+OK client/src/components/AdvancedDelivery.jsx
+OK client/src/components/CampaignWorkspace.jsx
+OK client/src/components/CommandCenter.jsx
+OK client/src/components/CustomReports.jsx
+OK client/src/components/EasyAds.jsx
+OK client/src/components/FinancePanel.jsx
+OK client/src/components/MediaLibrary.jsx
+OK client/src/components/Monitoring.jsx
+OK client/src/components/PerformanceDashboard.jsx
+OK client/src/components/PublishingCenter.jsx
+OK client/src/components/ui.jsx
+OK client/src/main.jsx
+OK client/src/uploads.js
+Checked 16 files; errors 0

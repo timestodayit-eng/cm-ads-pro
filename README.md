@@ -1,3 +1,7 @@
+# Ads Command Center v0.8 — Full GitHub-ready Source
+
+**Start with [INSTALL-v0.8.md](INSTALL-v0.8.md).**
+
 **Publishing reliability update (v0.7.3):** See [FIX-v0.7.3.md](FIX-v0.7.3.md) for ABO/CBO choice, safer Meta errors, video status, activation safeguards, and live-testing requirements.
 
 **v0.7 update:** Audience (Broad, Advantage+, permitted Manual), placement selection, Reach/Impressions frequency settings and bidding controls in Easy Ads and Campaign Workspace. Details and caveats: [v0.7 Advanced Delivery](docs/V07-ADVANCED-DELIVERY.md); upgrade: [INSTALL-v0.7](INSTALL-v0.7.md).
@@ -31,3 +35,11 @@ Read **`START-HERE.md`** first. New installation: import `sql/FRESH-INSTALL-v0.5
 ## v0.7.4 Video Thumbnail Fix
 
 See `FIX-v0.7.4-VIDEO-THUMBNAIL.md` for the Meta video creative error 1443226 fix, existing-batch recovery, deployment, and safety requirements.
+
+## v0.8 — AI Ads Copilot + AI Documents (complete source)
+
+This full source package **adds** a connected, read-only AI chat over real synced Meta metrics, deeper diagnostic questions, per-user conversation history, editable multi-section AI Documents, durable version history and professional exports (HTML/PDF/DOCX/XLSX/CSV). It keeps all prior v0.7.4 code, including paused publishing and media-thumbnail recovery.
+
+**Existing database upgrade:** back up; import only `sql/007-ai-copilot-documents.sql`. **New empty database:** `sql/FRESH-INSTALL-v0.8.sql`. See [INSTALL-v0.8.md](INSTALL-v0.8.md). PDF export of Bengali text requires a configured installed Unicode font (`PDF_FONT_PATH`) or use the HTML Print→Save as PDF workflow.
+
+**Important:** This is source, not a claim that the production build or live Meta writes passed. `npm install` requires external registry access; run GitHub Actions to verify build and MySQL integration. `ACTIVATION_ENABLED=false` until a real paused Campaign → Ad Set → Creative → Ad test succeeds.

@@ -33,3 +33,21 @@ export function extractResponseText(data){
  if(parts.some(x=>x.type==='refusal'))throw new Error('OpenAI refused the report');
  const text=parts.filter(x=>x.type==='output_text').map(x=>x.text).join('');if(!text)throw new Error('OpenAI returned no report');return text;
 }
+
+// Read-only AI reports can cover arbitrarily many synced ads; aggregate totals always
+// represent all rows, while detailed evidence is bounded to protect API token budgets.
+// Omissions are explicitly disclosed; the model must not claim exhaustive ad-level analysis.
+export function compactAiSnapshot(data,{maxAds=120,maxAccounts=100}={}){
+ const bySpend=(a,b)=>(Number(b.spend)||0)-(Number(a.spend)||0);
+ const accounts=(data.accounts||[]).slice().sort(bySpend);
+ const ads=(data.ads||[]).slice().sort(bySpend);
+ const windows=data.windows||[];
+ return {
+  ...data,
+  accounts:accounts.slice(0,maxAccounts),
+  ads:ads.slice(0,maxAds),
+  windows:windows.slice(0,maxAccounts),
+  selectionCoverage:{totalAccounts:accounts.length,accountsWithDetails:Math.min(accounts.length,maxAccounts),totalAds:ads.length,adsWithDetails:Math.min(ads.length,maxAds),totalWindows:windows.length},
+  limitations:[...(data.limitations||[]),...(ads.length>maxAds||accounts.length>maxAccounts?[`Currency totals represent ALL synced ads, but detailed AI evidence is a top-spend sample: ${Math.min(ads.length,maxAds)}/${ads.length} ads and ${Math.min(accounts.length,maxAccounts)}/${accounts.length} accounts. This is not exhaustive ad-level coverage.`]:[])]
+ };
+}

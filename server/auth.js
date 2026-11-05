@@ -41,7 +41,7 @@ export function authRoutes(){
  r.get('/bootstrap',async(req,res)=>{
   const cfg=configuration();let database=false,schema=false,setupRequired=false;
   if(cfg.database){try{await query('SELECT 1');database=true;const [row]=await query('SELECT COUNT(*) AS n FROM users');schema=true;setupRequired=Number(row.n)===0;}catch{}}
-  res.json({configuration:cfg,database,schema,setupRequired,release:'0.5.0'});
+  res.json({configuration:cfg,database,schema,setupRequired,release:'0.8.0'});
  });
  r.post('/auth/setup',async(req,res)=>{
   if(!configuration().session||!strongSecret(config.setupSecret))throw httpError(503,'Configure SESSION_SECRET and FIRST_ADMIN_SETUP_SECRET in Hostinger.');

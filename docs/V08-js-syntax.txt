@@ -1,0 +1,5 @@
+
+> coastal-ads-command-center@0.8.0 check
+> node scripts/check-source.js
+
+Server/shared/test JavaScript syntax passed. JSX is checked by npm run build.

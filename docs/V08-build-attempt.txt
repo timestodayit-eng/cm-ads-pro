@@ -1,0 +1,5 @@
+
+> coastal-ads-command-center@0.8.0 build
+> vite build && node scripts/check-build.js
+
+sh: 1: vite: not found

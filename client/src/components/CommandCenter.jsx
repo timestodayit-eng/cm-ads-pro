@@ -2,10 +2,11 @@ import React,{useEffect,useState} from 'react';
 import {api,money} from '../api.js';
 import {Badge,Field,Notice} from './ui.jsx';
 import {buildPlan} from '../../../shared/planning.js';
-export default function CommandCenter({accounts,user,notify,onPublishing}){
+export default function CommandCenter({accounts,user,notify,onPublishing,initialInstruction=''}){
  const [media,setMedia]=useState([]),[selectedAccounts,setSelectedAccounts]=useState([]),[selectedMedia,setSelectedMedia]=useState([]);
- const [instruction,setInstruction]=useState(''),[maximum,setMaximum]=useState('300'),[currency,setCurrency]=useState('USD');
+ const [instruction,setInstruction]=useState(initialInstruction),[maximum,setMaximum]=useState('300'),[currency,setCurrency]=useState('USD');
  const [proposal,setProposal]=useState(null),[busy,setBusy]=useState(false),[error,setError]=useState('');
+ useEffect(()=>{if(initialInstruction)setInstruction(initialInstruction);},[initialInstruction]);
  const mapped=accounts.filter(a=>a.slot).sort((a,b)=>a.slot-b.slot);
  const available=mapped.filter(a=>a.currency===currency);
  useEffect(()=>{api('/media').then(x=>setMedia(x.assets.filter(a=>a.status==='ready'))).catch(e=>setError(e.message));},[]);

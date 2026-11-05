@@ -12,7 +12,7 @@ before(async()=>{
  if(!enabled)return;
  Object.assign(process.env,{NODE_ENV:'test',APP_ORIGIN:'http://localhost',SESSION_SECRET:'test-session-secret-not-for-production-1234567890',FIRST_ADMIN_SETUP_SECRET:'test-setup-secret-not-for-production-1234567890',TOKEN_ENCRYPTION_KEY:'a1'.repeat(32),META_APP_ID:'100',META_APP_SECRET:'mock-secret-not-real',META_CONFIG_ID:'200',META_API_VERSION:'v99.0',META_REDIRECT_URI:'http://localhost/api/meta/callback'});
  ({query,closeDB}=await import('../../server/db.js'));
- for(const file of ['001-initial.sql','002-media-finance.sql','003-monitoring.sql','004-publishing.sql','005-custom-reports.sql','006-workspace-branding.sql'])for(const statement of readFileSync(new URL('../../sql/'+file,import.meta.url),'utf8').replace(/^\s*--.*$/gm,'').split(';').map(s=>s.trim()).filter(Boolean))await query(statement);
+ for(const file of ['001-initial.sql','002-media-finance.sql','003-monitoring.sql','004-publishing.sql','005-custom-reports.sql','006-workspace-branding.sql','007-ai-copilot-documents.sql'])for(const statement of readFileSync(new URL('../../sql/'+file,import.meta.url),'utf8').replace(/^\s*--.*$/gm,'').split(';').map(s=>s.trim()).filter(Boolean))await query(statement);
  const{createApp}=await import('../../server/app.js');server=createApp().listen(0,'127.0.0.1');await new Promise(resolve=>server.once('listening',resolve));base='http://127.0.0.1:'+server.address().port;
 });
 after(async()=>{globalThis.fetch=rawFetch;if(server)await new Promise(r=>server.close(r));if(closeDB)await closeDB();});
@@ -84,6 +84,25 @@ it('custom report fields, templates and large-selection query paths respond safe
  const perf=await call('/api/performance/query',{method:'POST',body:{period:'today',accountIds:['act_123']}});assert.equal(perf.status,200);
  const finance=await call('/api/finance/query',{method:'POST',body:{accountIds:['act_123']}});assert.equal(finance.status,200);
  const deleted=await call('/api/custom-reports/templates/'+stored.data.id,{method:'DELETE'});assert.equal(deleted.status,200);
+});
+it('AI conversations and editable document versions persist and enforce safe export',async()=>{
+ const created=await call('/api/copilot/conversations',{method:'POST',body:{title:'My test analysis',accountIds:['act_123']}});
+ assert.equal(created.status,201);const convoId=created.data.id;
+ const list=await call('/api/copilot/conversations');assert.ok(list.data.conversations.some(c=>c.id===convoId));
+ const denied=await call('/api/copilot/conversations/'+convoId+'/messages',{method:'POST',body:{message:'Show today result'}});
+ assert.equal(denied.status,503);assert.equal(denied.data.code,'OPENAI_NOT_CONFIGURED');
+ const doc=await call('/api/documents',{method:'POST',body:{title:'Operations report',sections:[{heading:'Executive Summary',content:'Performance data is pending sync.'}]}});
+ assert.equal(doc.status,201);assert.equal(doc.data.version,1);
+ const id=doc.data.id;const detail=await call('/api/documents/'+id);assert.equal(detail.status,200);assert.equal(detail.data.version.sections.length,1);
+ const edited=await call('/api/documents/'+id,{method:'PUT',body:{expectedVersion:1,title:'Operations report',sections:[{heading:'Executive Summary',content:'Revised for management.'}]}});
+ assert.equal(edited.status,200);assert.equal(edited.data.version,2);
+ const conflict=await call('/api/documents/'+id,{method:'PUT',body:{expectedVersion:1,title:'Operations report',sections:[{heading:'Executive Summary',content:'Old version'}]}});
+ assert.equal(conflict.status,409);assert.equal(conflict.data.code,'DOC_VERSION_CONFLICT');
+ const old=await call('/api/documents/'+id+'/versions/1');assert.equal(old.status,200);
+ const html=await call('/api/documents/'+id+'/export?format=html');assert.equal(html.status,200);assert.match(html.data,/Save as PDF/);
+ const csv=await call('/api/documents/'+id+'/export?format=csv');assert.equal(csv.status,200);
+ const restored=await call('/api/documents/'+id+'/restore',{method:'POST',body:{version:1}});assert.equal(restored.data.version,3);
+ const final=await call('/api/documents/'+id+'/finalize',{method:'POST'});assert.equal(final.status,200);
 });
 it('hourly dashboard never invents unsynced spend',async()=>{
  const r=await call('/api/performance?period=12h');assert.equal(r.status,200);assert.equal(r.data.accounts[0].metrics.spend,null);assert.equal(r.data.accounts[0].metrics.calls,null);
