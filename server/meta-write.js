@@ -3,6 +3,7 @@ import {config,configuration,storageEndpoint} from './config.js';
 import {httpError} from './security.js';
 import {graph} from './meta.js';
 import {describeMetaError,interpretVideoStatus} from '../shared/meta-diagnostics.js';
+import {pickVideoThumbnail} from '../shared/meta-thumbnail.js';
 let store;
 
 function proof(token){return createHmac('sha256',config.meta.appSecret).update(token).digest('hex');}
@@ -49,6 +50,20 @@ export async function uploadMetaMedia({accountId,token,asset}){
  if(!response.ok||body.error){const e=httpError(502,'Meta rejected the image upload.','META_MEDIA_'+String(body.error?.code||response.status));e.metaRejected=true;throw e;}
  const image=Object.values(body.images||{})[0];if(!image?.hash)throw httpError(502,'Meta returned no image hash.','META_IMAGE_HASH_MISSING');
  return{imageHash:String(image.hash),kind:'image',status:'ready'};
+}
+export async function getMetaVideoThumbnail(videoId,token){
+ if(!/^\d{5,40}$/.test(String(videoId||'')))throw httpError(422,'Valid Meta video ID is required for thumbnail lookup.','META_VIDEO_ID_REQUIRED');
+ let thumbnail=null;
+ try{thumbnail=pickVideoThumbnail(await graph(`${videoId}/thumbnails`,token,{fields:'uri,is_preferred',limit:25}));}catch(e){
+  // Some video account permissions support the picture field but not the thumbnails edge.
+  if(e?.retryAfterSeconds)throw e;
+ }
+ if(!thumbnail){
+  const info=await graph(String(videoId),token,{fields:'picture'});
+  thumbnail=pickVideoThumbnail(info);
+ }
+ if(!thumbnail)throw httpError(422,'Meta video has no accessible HTTPS thumbnail yet. Set a preferred thumbnail in Meta and retry after it finishes processing.','META_VIDEO_THUMBNAIL_MISSING');
+ return thumbnail;
 }
 export async function isVideoReady(videoId,token){
  const res=await graph(String(videoId),token,{fields:'status'});

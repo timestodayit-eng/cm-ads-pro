@@ -27,3 +27,7 @@ Read **`START-HERE.md`** first. New installation: import `sql/FRESH-INSTALL-v0.5
 - Custom reports by account/campaign/ad set/ad/day, 11 available metrics, date range, CSV export, and saved templates. Reports operate on stored synced Meta data.
 - Workspace panel name editable under Settings by a Super Admin; displayed on login, sidebar, footer and browser title.
 - Existing database: import `sql/UPGRADE-TO-v0.5.sql` (or import `005` then `006`). Fresh database: `sql/FRESH-INSTALL-v0.5.sql` once.
+
+## v0.7.4 Video Thumbnail Fix
+
+See `FIX-v0.7.4-VIDEO-THUMBNAIL.md` for the Meta video creative error 1443226 fix, existing-batch recovery, deployment, and safety requirements.

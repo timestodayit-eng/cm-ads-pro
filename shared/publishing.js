@@ -82,7 +82,9 @@ export function metaAdsetForm(plan,allocation,content,metaCampaignId,index,pageI
 export function metaCreativeForm(plan,allocation,content,asset,pageId,tag){
  const link=plan.conversion.type==='CALL'?`tel:${allocation.phone}`:allocation.websiteUrl;
  const call_to_action={type:content.cta,value:{link}};
- const payload=asset.kind==='video'?{video_data:{video_id:asset.meta_media_id,message:content.caption,title:content.headline,link_description:content.description||undefined,call_to_action}}:
+ const thumbnail=asset.image_hash?{image_hash:asset.image_hash}:asset.thumbnail_url?{image_url:asset.thumbnail_url}:null;
+ if(asset.kind==='video'&&!thumbnail)throw Object.assign(new Error('Meta video thumbnail is required before creating an ad creative.'),{code:'META_VIDEO_THUMBNAIL_MISSING'});
+ const payload=asset.kind==='video'?{video_data:{video_id:asset.meta_media_id,...thumbnail,message:content.caption,title:content.headline,link_description:content.description||undefined,call_to_action}}:
  {link_data:{image_hash:asset.image_hash,link,message:content.caption,name:content.headline,description:content.description||undefined,call_to_action}};
  if(asset.kind==='video'&&!asset.meta_media_id||asset.kind==='image'&&!asset.image_hash)throw new Error('Meta media asset is not yet ready.');
  return{name:`${content.title} [${tag}]`,object_story_spec:{page_id:pageId,...payload}};

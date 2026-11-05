@@ -4,7 +4,7 @@ import {query,transaction,parseJSON,audit} from './db.js';
 import {httpError} from './security.js';
 import {requireAuth,requireRole,csrfGuard,limit} from './auth.js';
 import {connectionToken,graph} from './meta.js';
-import {metaWrite,uploadMetaMedia,isVideoReady,metaSetStatus} from './meta-write.js';
+import {metaWrite,uploadMetaMedia,isVideoReady,getMetaVideoThumbnail,metaSetStatus} from './meta-write.js';
 import {previewPublishing,normalizePageMap,metaCampaignForm,metaAdsetForm,metaCreativeForm} from '../shared/publishing.js';
 import {enqueue} from './jobs.js';
 import {configuration,config} from './config.js';
@@ -133,6 +133,28 @@ export function publishRoutes(){
   await audit(req.user.id,'pause_requested',batch.batch.id);
   res.status(202).json({queued:target.length,message:'Pause requested. Campaigns may keep spending until Meta processes their pause step; process queue promptly.'});
  });
+ // Targeted recovery only: Meta explicitly rejected ad creative creation with
+ // subcode 1443226 (missing video thumbnail). Never retry ambiguous network writes.
+ r.post('/batches/:id/recover-thumbnail',requireRole('super_admin'),csrfGuard,async(req,res)=>{
+  const batchId=safeId(req.params.id),runId=safeId(req.body.runId);
+  if(req.body.confirm!=='RETRY VERIFIED THUMBNAIL')throw err('REMOTE_VERIFICATION_REQUIRED','First verify that no creative or ad was created remotely, then type RETRY VERIFIED THUMBNAIL.',422);
+  await transaction(async c=>{
+   await c.execute('SELECT id FROM app_locks WHERE id=1 FOR UPDATE');
+   const [[run]]=await c.execute('SELECT * FROM publish_account_runs WHERE id=? AND batch_id=? FOR UPDATE',[runId,batchId]);
+   if(!run||run.status!=='needs_review'||run.stage!=='creative'||run.inflight_stage!=='create_creative'||run.error_code!=='META_WRITE_100'||!String(run.error_message||'').includes('1443226'))
+    throw err('RECOVERY_NOT_ELIGIBLE','This account cannot be resumed by the video thumbnail recovery. Review Meta resources first.',422);
+   const [[item]]=await c.execute('SELECT adset_id,creative_id,ad_id FROM publish_items WHERE run_id=? AND content_index=? FOR UPDATE',[runId,run.content_index]);
+   if(!item?.adset_id||item.creative_id||item.ad_id||!run.campaign_id)
+    throw err('RECOVERY_REMOTE_STATE','Expected an existing campaign and ad set but no saved creative/ad. Review the Meta IDs.',422);
+   const [updated]=await c.execute("UPDATE publish_account_runs SET status='building',inflight=0,inflight_stage=NULL,error_code=NULL,error_message=NULL WHERE id=? AND status='needs_review'",[runId]);
+   if(updated.affectedRows!==1)throw err('RECOVERY_CONFLICT','Recovery state changed; refresh and review.',409);
+  });
+  const [existing]=await query("SELECT id FROM jobs WHERE kind='publish_step' AND status IN ('queued','running') AND JSON_UNQUOTE(JSON_EXTRACT(payload_json,'$.runId'))=? LIMIT 1",[runId]);
+  if(!existing)await enqueue('publish_step',{runId},`thumbnail-retry:${runId}:${randomUUID()}`);
+  await audit(req.user.id,'thumbnail_recovery_approved',runId);
+  await updateBatch(batchId);
+  res.status(202).json({ok:true,message:'Existing campaign and ad set preserved. Only creative creation is scheduled for retry after manual verification.'});
+ });
  r.post('/batches/:id/process',requireRole('super_admin','manager'),csrfGuard,async(req,res)=>{
   const batch=await batchData(req.params.id);
   if(!batch.runs.length)throw err('BATCH_EMPTY','No accounts in this batch.');
@@ -220,9 +242,13 @@ export async function processPublishStep(runId){
    await query("UPDATE publish_items SET adset_id=?,status='adset_created' WHERE id=?",[data.id,item.id]);
    await advance(row,{stage:'creative'});
   }else if(row.stage==='creative'){
-   await inflight(row,'create_creative');
    const [asset]=await query('SELECT kind FROM media_assets WHERE id=?',[content.mediaAssetId]);
-   const payload=metaCreativeForm(plan,allocation,content,{...asset,meta_media_id:item.meta_media_id,image_hash:item.image_hash},pageId,row.id.slice(0,8));
+   if(!asset)throw err('MEDIA_NOT_READY','Media metadata is missing.');
+   // Thumbnail lookup is read-only and must finish before marking a remote write in-flight.
+   // The Meta video thumbnail URL is read just-in-time, avoiding a stale stored CDN URL.
+   const thumbnailUrl=asset.kind==='video'&&!item.image_hash?await getMetaVideoThumbnail(item.meta_media_id,token):null;
+   const payload=metaCreativeForm(plan,allocation,content,{...asset,meta_media_id:item.meta_media_id,image_hash:item.image_hash,thumbnail_url:thumbnailUrl},pageId,row.id.slice(0,8));
+   await inflight(row,'create_creative');
    const data=await metaWrite(`${row.account_id}/adcreatives`,token,payload);
    if(!/^\d+$/.test(String(data.id||'')))throw err('META_CREATIVE_ID_MISSING','Meta returned no creative ID.');
    await query("UPDATE publish_items SET creative_id=?,status='creative_created' WHERE id=?",[data.id,item.id]);

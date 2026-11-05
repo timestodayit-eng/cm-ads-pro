@@ -46,6 +46,6 @@ test('Meta error includes useful detail and subcode but redacts credentials',()=
 });
 test('phone creative does not switch advertiser destination when selected separately',()=>{
  const draft=input();draft.conversion={type:'CALL',goal:'CALLS',phone:'+8801969918811'};draft.contents[0].cta='CALL_NOW';
- const {plan}=previewPublishing(draft);const a=metaCreativeForm(plan,plan.allocations[0],plan.contents[0],{kind:'video',meta_media_id:'123456'},'1234567890','run');
+ const {plan}=previewPublishing(draft);const a=metaCreativeForm(plan,plan.allocations[0],plan.contents[0],{kind:'video',meta_media_id:'123456',thumbnail_url:'https://scontent.xx.fbcdn.net/test.jpg'},'1234567890','run');
  assert.equal(a.object_story_spec.video_data.call_to_action.value.link,'tel:+8801969918811');
 });
